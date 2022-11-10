@@ -462,7 +462,7 @@ BOOL CStreamrecordDlg::OnInitDialog()
 	SetTimer(TIMER_ID_6, 3600000, 0);
 	SetTimer(TIMER_ID_7, 600000, 0);
 	SetTimer(TIMER_ID_8, 60000, 0);
-	////SetTimer(TIMER_ID_9,180000, 0);
+	///SetTimer(TIMER_ID_9,180000, 0);
 	
 
 	m_play_button.SetBitmap(::LoadBitmap( AfxGetApp()->m_hInstance,MAKEINTRESOURCE(IDB_BITMAP5)));
@@ -475,7 +475,15 @@ BOOL CStreamrecordDlg::OnInitDialog()
 	
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
-
+//------------------------------------------------------
+// OnBnClickedDatabase
+//
+// Function is called when the user clicks on the
+// Sync with Database checkmark
+// PARMS: None
+// RETURNS: Nothing; if enabled, preferences are saved
+// and the database is loaded into memory
+//-------------------------------------------------------
 void CStreamrecordDlg::OnBnClickedDatabase()
 {
 	m_database = !m_database;
@@ -505,7 +513,13 @@ void CStreamrecordDlg::OnSysCommand(UINT nID, LPARAM lParam)
 // If you add a minimize button to your dialog, you will need the code below
 //  to draw the icon.  For MFC applications using the document/view model,
 //  this is automatically done for you by the framework.
-
+//------------------------------------------------------
+// OnPaint
+// Function is called when it's time to paint the 
+// screen
+// PARAMS: None
+// RETURNS: Nothing; screen is painted
+//------------------------------------------------------
 void CStreamrecordDlg::OnPaint() 
 {
 	// Enable activation code button if activation code not
@@ -554,7 +568,14 @@ HCURSOR CStreamrecordDlg::OnQueryDragIcon()
 {
 	return (HCURSOR) m_hIcon;
 }
-
+//------------------------------------------------------
+// OnConnect
+// Function is called when the Connect button is pressed
+// Spawns a stream that records the stream URL to the
+// output file
+// PARAMS: None
+// Returns: Nothing; stream is recorded
+//-------------------------------------------------------
 void CStreamrecordDlg::OnConnect() 
 {
 	// TODO: Add your control notification handler code here
@@ -606,19 +627,37 @@ void CStreamrecordDlg::OnConnect()
 		}
 	}
 }
-
+//------------------------------------------------------
+// OnKillfocusEdit1
+// Function is called when Stream URL edit box loses
+// focus
+// PARAMS: None
+// RETURNS: Nothing
+//------------------------------------------------------
 void CStreamrecordDlg::OnKillfocusEdit1() 
 {
 	// TODO: Add your control notification handler code here
 	UpdateData(TRUE);
 }
-
+//------------------------------------------------------
+// OnKillfocusEdit2
+// Function is called when output file edit box loses
+// focus
+// PARAMS: None
+// RETURNS: Nothing
+//------------------------------------------------------
 void CStreamrecordDlg::OnKillfocusEdit2() 
 {
 	// TODO: Add your control notification handler code here
 	UpdateData(TRUE);
 }
-
+//------------------------------------------------------
+// CheckMessagePump
+// Function is called when Stream URL edit box loses
+// focus
+// PARAMS: None
+// RETURNS: Nothing
+//------------------------------------------------------
 void CStreamrecordDlg::CheckMessagePump()
 {
 	MSG msg;
@@ -629,7 +668,14 @@ void CStreamrecordDlg::CheckMessagePump()
 		DispatchMessage(&msg);
 	}
 }
-
+//------------------------------------------------------
+// OnStop
+// Function is called when stop button is pressed
+// All it does it set the terminate flag
+// 
+// PARAMS: None
+// RETURN: Nothing; terminate flag set to TRUE
+//-------------------------------------------------------
 void CStreamrecordDlg::OnStop() 
 {
 	// TODO: Add your control notification handler code here

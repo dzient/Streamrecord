@@ -430,6 +430,7 @@ bool StreamInstance::RecordStream()
 	char surl[256];
 	CString string_url;
 	char tstr[1024];
+	int writecount = 0;
 
 	//CRecordSession session(PROGRAM_NAME,dwAccessType);
 
@@ -721,7 +722,11 @@ bool StreamInstance::RecordStream()
 						status_message = "RECONNECTING";
 						ConvertString(minimize_icon, "yellow.ico");
 						pref->schedule_entry[stream_idx].status = 2;
-						SetStatus(*pref, stream_idx);
+						if (writecount++ > 100)
+						{
+							writecount = 0;
+							SetStatus(*pref, stream_idx);
+						}
 						//minimize_icon = "yellow.ico";
 						Sleep(1000);
 						if (inf_retry && retry >= RETRY_LIMIT)
@@ -845,8 +850,9 @@ bool StreamInstance::RecordStream()
 					fail = false;
 					retry_count = 0;
 					status_message = "RECORDING";
-					if (pref->schedule_entry[stream_idx].status != 1)
+					if (writecount++ > 100) //pref->schedule_entry[stream_idx].status != 1)
 					{
+						writecount = 0;
 						pref->schedule_entry[stream_idx].status = 1;
 						SetStatus(*pref, stream_idx);
 					}
