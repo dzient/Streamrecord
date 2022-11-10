@@ -976,8 +976,8 @@ bool Database::SetStatus(const STREAMRECORD_PREFERENCES& pref,int n)
 	char update[1024];
 	bool rv = false;
 	string status;
-	while (preferences_lock)
-		Sleep(500);
+	///while (preferences_lock)
+	///	Sleep(500);
 	
 
 	if (pref.schedule_entry != NULL && pref.schedule_entry[n].thread_ptr == NULL)
@@ -1020,7 +1020,7 @@ bool Database::SetStatus(const STREAMRECORD_PREFERENCES& pref,int n)
 	{
 		LogError(e);
 		ResetConnection(pref);
-		//preferences_lock = false;
+		preferences_lock = false;
 		return false;
 	}
 	preferences_lock = false;
