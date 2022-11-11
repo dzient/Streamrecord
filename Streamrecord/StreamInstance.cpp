@@ -722,9 +722,10 @@ bool StreamInstance::RecordStream()
 						status_message = "RECONNECTING";
 						ConvertString(minimize_icon, "yellow.ico");
 						pref->schedule_entry[stream_idx].status = 2;
-						if (writecount++ > 100)
+						if (pref->schedule_entry[stream_idx].status != 2)
 						{
-							writecount = 0;
+							//writecount = 0;
+							pref->schedule_entry[stream_idx].status = 2;
 							SetStatus(*pref, stream_idx);
 						}
 						//minimize_icon = "yellow.ico";
@@ -850,9 +851,9 @@ bool StreamInstance::RecordStream()
 					fail = false;
 					retry_count = 0;
 					status_message = "RECORDING";
-					if (writecount++ > 100) //pref->schedule_entry[stream_idx].status != 1)
+					if (pref->schedule_entry[stream_idx].status != 1)
 					{
-						writecount = 0;
+						//writecount = 0;
 						pref->schedule_entry[stream_idx].status = 1;
 						SetStatus(*pref, stream_idx);
 					}

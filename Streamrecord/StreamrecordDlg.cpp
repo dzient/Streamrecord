@@ -280,7 +280,8 @@ CStreamrecordDlg::CStreamrecordDlg(CWnd* pParent /*=NULL*/)
 		pref.irc.color,pref.irc.background);
 	if (pref.irc.enable_posting && irc != NULL)
 		irc->Start();
-
+	if (pref.database)
+		ResetStatus(pref);
 	srand(time(NULL));
 
 	
@@ -462,7 +463,7 @@ BOOL CStreamrecordDlg::OnInitDialog()
 	SetTimer(TIMER_ID_6, 3600000, 0);
 	SetTimer(TIMER_ID_7, 600000, 0);
 	SetTimer(TIMER_ID_8, 60000, 0);
-	///SetTimer(TIMER_ID_9,180000, 0);
+	SetTimer(TIMER_ID_9,180000, 0);
 	
 
 	m_play_button.SetBitmap(::LoadBitmap( AfxGetApp()->m_hInstance,MAKEINTRESOURCE(IDB_BITMAP5)));
@@ -685,8 +686,14 @@ void CStreamrecordDlg::OnStop()
 	}
 }
 
-
-
+//--------------------------------------------------------------
+// WindowProc
+// Callback function is used to process messages
+// PARAMS: message (UINT), wParam (WPARAM), lParam (LPARAM)
+// RETURNS: LRESULT (function calls the parent class's function)
+// This function is used to minimize and restore the program
+// 
+//---------------------------------------------------------------
 LRESULT CStreamrecordDlg::WindowProc(UINT message, WPARAM wParam, LPARAM lParam) 
 {
 	// TODO: Add your specialized code here and/or call the base class	
@@ -726,7 +733,14 @@ LRESULT CStreamrecordDlg::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 
 	return CDialog::WindowProc(message, wParam, lParam);
 }
-
+//--------------------------------------------------------------
+// OnOK
+// Function is called if the OK button is clicked
+// PARAMS: None
+// RETURNS: Nothing; variables are copies into preferences
+// structure and saved
+//
+//---------------------------------------------------------
 void CStreamrecordDlg::OnOK() 
 {
 	// TODO: Add extra validation here
@@ -777,7 +791,13 @@ void CStreamrecordDlg::OnOK()
 		delete dbase;
 	CDialog::OnOK();
 }
-
+//----------------------------------------------------------
+//OnSchedule
+//Function is called when the Schedule button is pressed
+//PARAMS: None
+//Returns: Nothing; Schedule dialog box is spawned
+//
+//----------------------------------------------------------
 void CStreamrecordDlg::OnSchedule() 
 {
 	// TODO: Add your control notification handler code here
@@ -796,7 +816,14 @@ void CStreamrecordDlg::OnSchedule()
 	box.DoModal();
 	pref.no_load = false;
 }
-
+//-----------------------------------------------------------
+//CheckServer
+//Function is called every 10 seconds to monitor an Icecast
+//server
+//PARAMS: None
+//RETURNS Nothing; ParseServerStatus function is spawned 
+//as a thread
+//-----------------------------------------------------------
 void CStreamrecordDlg::CheckServer()
 {
 	long i, j, mp_num;
@@ -981,7 +1008,16 @@ void CStreamrecordDlg::CheckServer()
 	//thread_mutex.Unlock();
 	//server_mutex.Unlock();
 }
-
+//---------------------------------------------------
+//CheckforScheduledEvents
+//Function is called every 5 seconds to see
+//if an item in the schedule needs to be recorded
+//PARAMS: None
+//RETURNS: Nothing; all items in the schedule array
+//are checked; if an item needs to be recorded, a
+//RecordStream function is spawned
+//
+//----------------------------------------------------
 void CStreamrecordDlg::CheckForScheduledEvents()
 {
 	long i, j;
@@ -1028,7 +1064,7 @@ void CStreamrecordDlg::CheckForScheduledEvents()
 	cur_time = new CTime(osBinaryTime);
 
 	memset(stream_index,-1,sizeof(long)*pref.num_entries);
-
+	// Get the current time;
 	hour = cur_time->GetHour();
 	min = cur_time->GetMinute();
 	sec = cur_time->GetSecond();
@@ -1057,14 +1093,19 @@ void CStreamrecordDlg::CheckForScheduledEvents()
 		daytwo_mask = 64;
 
 	
+	//Iterate through all schedule items;
+	//check to see if anything needs to be recorded
 
 
 	for (i = 0; i < pref.num_entries; i++)
 	{
+		//straddle variable is for a program that "straddles" between one day
+		//and another day; e.g. 11 PM to 1AM, or 10 PM to 2AM, etc.
 		straddle = false;
 		if (hour == 0 && min == 0 && sec < 10)
 			pref.schedule_entry[i].recorded = FALSE;
 
+		//straddle is true if end hour is less than the start hour:
 		if (pref.schedule_entry[i].end_hr < pref.schedule_entry[i].start_hr)
 			straddle = true;
 
@@ -1119,9 +1160,13 @@ void CStreamrecordDlg::CheckForScheduledEvents()
 			&& !pref.schedule_entry[i].stream_running))
 		{
 			
-			
+			//If the passwords don't match, skip this entry:
 			if (strcmp(pref.schedule_entry[i].password, pref.DBpassword) != 0)
 				continue;
+			//Record this entry IF the passwords match AND [IF the days match
+			//OR (IF it's the second day and the days match AND straddle 
+			//AND (hour is less than the end hour OR hour equals the end hour and 
+			//min is less than the end minute))
 			if (strcmp(pref.schedule_entry[i].password, pref.DBpassword) == 0
 				&& (day_mask&pref.schedule_entry[i].days) != 0 
 				|| ((daytwo_mask & pref.schedule_entry[i].days) != 0 && straddle
@@ -1129,14 +1174,7 @@ void CStreamrecordDlg::CheckForScheduledEvents()
 						|| (hour == pref.schedule_entry[i].end_hr && min < pref.schedule_entry[i].end_min) ))
 				|| pref.schedule_entry[i].monitor_mountpoint == 1)
 			{
-				/*
-				if (strcmp(pref.schedule_entry[i].stream_URL, "") == 0)
-				{
-					MessageBoxA(NULL, LPCSTR("WARNING: Blank URL."), PROGRAM_NAME, MB_OK | MB_ICONEXCLAMATION);
-					pref.schedule_entry[i].stream_idx = 0;
-					continue;
-				}
-				*/
+				
  				if (pref.path[strlen(pref.path)-1] != '\\')
 				{
 					strcat(pref.path,"\\");
@@ -1154,6 +1192,8 @@ void CStreamrecordDlg::CheckForScheduledEvents()
 				// It's time!
 				if (stream_count < MAX_STREAMS)
 				{
+					//chdir to the correct directory; if it does
+					//not exist, create it:
 					j = 0;
 					while (stream_array[j] != NULL)
 						j++;
@@ -1257,13 +1297,14 @@ void CStreamrecordDlg::CheckForScheduledEvents()
 						infinite_retry = false;
 					else
 						infinite_retry = true;
-
+					//Copy the parameters:
 					CopyString(psound_file, m_psound_file);
 					stream_array[j]->CopyParams(pref.schedule_entry[i].
 						stream_URL,output_filename,scast,enc,del_old,
 						pref.schedule_entry[i].encodebr,infinite_retry,ext,
 						mp,i,m_play_sound_file,psound_file,NULL,
 						pref.enable_sounds,irc,pref.irc.update_topic);
+					//Now, spawn the RecordStream thread:
 					do
 					{
 						pref.schedule_entry[i].thread_ptr 
@@ -1284,7 +1325,7 @@ void CStreamrecordDlg::CheckForScheduledEvents()
 						MB_OK|MB_ICONEXCLAMATION);
 				}
 			}
-		}
+		} // If the end time has been reached, set terminate flag to TRUE:
 		else if (((hour == pref.schedule_entry[i].end_hr
 			&& min >= pref.schedule_entry[i].end_min))
 			&& pref.schedule_entry[i].stream_idx >= 0
@@ -1295,41 +1336,14 @@ void CStreamrecordDlg::CheckForScheduledEvents()
 			if (stream_array[pref.schedule_entry[i].stream_idx] != NULL)
 				stream_array[pref.schedule_entry[i].stream_idx]->SetTerminate(TRUE);
 			pref.schedule_entry[i].stream_running = FALSE;
-		}
+		} // Print out information about the currently running streams:
 		else if (pref.schedule_entry[i].stream_idx >= 0
 			&& pref.schedule_entry[i].stream_idx < pref.num_entries
 			&& ((stream_array[pref.schedule_entry[i].stream_idx] != NULL 
 			&& stream_array[pref.schedule_entry[i].stream_idx]->Done())
 			|| stream_array[pref.schedule_entry[i].stream_idx] == 0))
 		{
-			/*
-			for (int j = 0; j < pref.num_entries; j++)
-			{
 			
-				if (pref.schedule_entry[j].thread_ptr != NULL)
-				{
-					CopyString(tempstr, stream_array[pref.schedule_entry[j].stream_idx]->GetStatusMessage());
-					if (strcmp(tempstr, "DONE RECORDING") == 0)
-					{
-						CopyString(lr, last_recording);
-						if (strcmp(lr, " ") == 0)
-							last_recording = stream_array[pref.schedule_entry[j].stream_idx]->GetStatusMessage();
-						else
-							last_recording += stream_array[pref.schedule_entry[j].stream_idx]->GetStatusMessage();
-						last_recording += " - ";
-						last_recording += pref.schedule_entry[j].program;
-						last_recording += "\r\n";
-					}
-					if (_strnicmp(tempstr, "IDLE", 4) != 0)
-					{
-						m_status += stream_array[pref.schedule_entry[j].stream_idx]->GetStatusMessage();
-						m_status += " - ";
-						m_status += pref.schedule_entry[j].program;
-						m_status += "\r\n";
-					}
-				}
-			}
-			*/
 			
 			if (stream_array[pref.schedule_entry[i].stream_idx] != NULL)
 			{
@@ -1629,8 +1643,8 @@ void CStreamrecordDlg::OnTimer(UINT_PTR nIDEvent)
 				ResetConnection(pref);
 			break;
 		case TIMER_ID_9:
-			//if (dialog_init && pref.database)
-			//	SetStatus(pref);
+			if (dialog_init && pref.database)
+				SetStatus(pref);
 			break;
 		default: break;
 	}

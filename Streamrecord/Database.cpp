@@ -936,6 +936,7 @@ bool Database::ResetStatus(const STREAMRECORD_PREFERENCES& pref)
 		switch (pref.schedule_entry[i].status)
 		{
 		case 0:
+		case 5:
 		default:
 			status = "Queued";
 			break;
@@ -947,9 +948,11 @@ bool Database::ResetStatus(const STREAMRECORD_PREFERENCES& pref)
 			break;
 		case 4: status = "Lost connection";
 			break;
-		case 5: status = "Done recording";
-			break;
+		//case 5: status = "Done recording";
+		//	break;
 		}
+		if (pref.schedule_entry[i].status == 5)
+			pref.schedule_entry[i].status = 0;
 
 		sprintf_s(update, "UPDATE schedule SET Status='%s' WHERE SCHEDULEID = %d",
 			status.c_str(), pref.schedule_entry[i].schedule_id);
