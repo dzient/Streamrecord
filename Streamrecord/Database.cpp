@@ -589,7 +589,7 @@ bool Database::LoadPreferences(STREAMRECORD_PREFERENCES& pref)
 	///AfxBeginThread(CopyPref, (LPVOID)&param_ptr, THREAD_PRIORITY_NORMAL);
 	while (preferences_lock)
 		Sleep(1000);
-
+	///schedule_mutex.Lock();
 	preferences_lock = true;
 	if (!pinit) //pref.schedule_entry == NULL)
 	{
@@ -692,6 +692,7 @@ bool Database::LoadPreferences(STREAMRECORD_PREFERENCES& pref)
 		preferences_lock = false;
 		LogError(e);
 		ResetConnection(pref);
+		
 		return false;
 	}
 	prev = pref.num_entries;
@@ -731,7 +732,7 @@ bool Database::LoadPreferences(STREAMRECORD_PREFERENCES& pref)
 	
 	//memcpy(&pref, temp, sizeof(STREAMRECORD_PREFERENCES));
 	//memcpy(pref.schedule_entry, temp->schedule_entry, sizeof(SCHEDULE) * MAX_SCHEDULE_ENTRIES);
-	//schedule_mutex.Unlock();
+	///////schedule_mutex.Unlock();
 	preferences_lock = false;
 	db_updated = true;
 	return true;
@@ -752,6 +753,7 @@ bool Database::CopySchedule(STREAMRECORD_PREFERENCES& pref)
 	while (preferences_lock)
 		Sleep(500);
 	preferences_lock = true;
+	///schedule_mutex.Lock();
 	if (temp != NULL && temp->num_entries > 0)
 	{
  		for (i = 0, max_id = 0; i < temp->num_entries; i++)
@@ -858,11 +860,14 @@ bool Database::CopySchedule(STREAMRECORD_PREFERENCES& pref)
 			delete[] temp_recorded;
 		if (temp_stream_running != NULL)
 			delete[] temp_stream_running;
+
+		////schedule_mutex.Unlock();
 		
 	}
 	preferences_lock = false;
 	db_updated = true;
 	init = true;
+	/////schedule_mutex.Unlock();
 	////pref.num_entries = i; // temp->num_entries;
 	return true;
 }
@@ -1032,9 +1037,14 @@ bool Database::SetStatus(const STREAMRECORD_PREFERENCES& pref,int n)
 
 bool Database::SetStatus(const STREAMRECORD_PREFERENCES& pref)
 {
+	while (preferences_lock)
+		Sleep(500);
+	preferences_lock = true;
 	for (int i = 0; i < pref.num_entries; i++)
-		if (pref.schedule_entry[i].thread_ptr != NULL && !SetStatus(pref, i))
-			return false;
+		if (pref.schedule_entry[i].thread_ptr != NULL)
+			pref.schedule_entry[i].status = 0;
+
+	preferences_lock = false;
 	return true;
 
 }

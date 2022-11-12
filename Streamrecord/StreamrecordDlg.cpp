@@ -463,7 +463,7 @@ BOOL CStreamrecordDlg::OnInitDialog()
 	SetTimer(TIMER_ID_6, 3600000, 0);
 	SetTimer(TIMER_ID_7, 600000, 0);
 	SetTimer(TIMER_ID_8, 60000, 0);
-	SetTimer(TIMER_ID_9,180000, 0);
+	///SetTimer(TIMER_ID_9,60000, 0);
 	
 
 	m_play_button.SetBitmap(::LoadBitmap( AfxGetApp()->m_hInstance,MAKEINTRESOURCE(IDB_BITMAP5)));
@@ -1549,6 +1549,8 @@ void CStreamrecordDlg::CheckForScheduledEvents()
 
 }
 
+
+
 void CStreamrecordDlg::OnKillfocusEdit4() 
 {
 	// TODO: Add your control notification handler code here
@@ -1637,14 +1639,14 @@ void CStreamrecordDlg::OnTimer(UINT_PTR nIDEvent)
 			break;
 		case TIMER_ID_7:
 			if (dialog_init && pref.database)
-			//	ResetStatus(pref);
+				ResetStatus(pref);
 		case TIMER_ID_8:
 			if (dialog_init && pref.database)
 				ResetConnection(pref);
 			break;
 		case TIMER_ID_9:
-			if (dialog_init && pref.database)
-				SetStatus(pref);
+			//if (dialog_init && pref.database)
+			//	SetStatus(pref);
 			break;
 		default: break;
 	}

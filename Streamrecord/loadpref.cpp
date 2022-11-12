@@ -30,11 +30,14 @@ UINT SaveThread(LPVOID db_params)
 		Sleep(100);
 	return 1;
 }
+CMutex LDB_mutex;
 UINT CopyScheduleThread(LPVOID db_params)
 {
+	LDB_mutex.Lock();
 	db_struct* db = (db_struct*)db_params;
 	while (!db->dbptr->CopySchedule(*db->pref))
 		Sleep(100);
+	LDB_mutex.Unlock();
 	return 1;
 }
 
@@ -42,7 +45,7 @@ UINT LoadDatabaseThread(LPVOID db_params)
 {
 	db_struct* db = (db_struct*)db_params;
 	bool rval;
-
+	LDB_mutex.Lock();
 	do
 	{
 		rval = db->dbptr->LoadPreferences(*db->pref);
@@ -53,6 +56,7 @@ UINT LoadDatabaseThread(LPVOID db_params)
 			db->dbptr = dbase;
 		}
 	} while (!rval);
+	LDB_mutex.Unlock();
 		//Sleep(100);
 	return 1;
 }
@@ -437,7 +441,7 @@ void LoadDatabase(STREAMRECORD_PREFERENCES& pref)
 		db_params.dbptr = dbase;
 		db_params.pref = &pref;
 
-		AfxBeginThread(LoadDatabaseThread, (LPVOID)&db_params, THREAD_PRIORITY_BELOW_NORMAL);
+		AfxBeginThread(LoadDatabaseThread, (LPVOID)&db_params, THREAD_PRIORITY_NORMAL);
 	}
 }
 
@@ -450,7 +454,7 @@ void CopySchedule(STREAMRECORD_PREFERENCES& pref)
 	db_params.dbptr = dbase;
 	db_params.pref = &pref;
 
-	AfxBeginThread(CopyScheduleThread, (LPVOID)&db_params, THREAD_PRIORITY_BELOW_NORMAL);
+	AfxBeginThread(CopyScheduleThread, (LPVOID)&db_params, THREAD_PRIORITY_NORMAL);
 }
 
 void ResetDatabase(const STREAMRECORD_PREFERENCES& pref)
@@ -516,7 +520,8 @@ bool SetStatus(const STREAMRECORD_PREFERENCES& pref)
 		dbase = new Database(pref);
 	db_params.dbptr = dbase;
 	db_params.pref = (STREAMRECORD_PREFERENCES*)&pref;
-
+	//while (!SetStatus(pref))
+	//	Sleep(1000);
 
 	AfxBeginThread(SetStatusOnlyThread, (LPVOID)&db_params, THREAD_PRIORITY_HIGHEST);
 	return true;
