@@ -1,5 +1,14 @@
 // ViewScheduleDlg.cpp : implementation file
 //
+//-------------------------------------------
+// David Zientara
+// 10-27-2022
+//
+// ViewScheduleDlg.cpp
+//
+// File for the ViewScheduleDlg class
+//
+//---------------------------------------------
 
 #include "stdafx.h"
 #include "ViewScheduleDlg.h"
@@ -19,7 +28,15 @@ const long NUM_LINES = 4;
 
 /////////////////////////////////////////////////////////////////////////////
 // ViewScheduleDlg dialog
-
+//-------------------------------------------
+// ConvertTimeToString
+// Function takes a number from 0 to 60 and 
+// converts it to string format...by adding 
+// 48 to it
+// PARAMS: n (DWORD), a number; ar (char array),
+// a string
+// RETURNS: Nothing; n is converted to string
+//--------------------------------------------
 void ConvertTimeToString(DWORD n, char ar[])
 {
 	if (n < 10)
@@ -34,7 +51,13 @@ void ConvertTimeToString(DWORD n, char ar[])
 	}
 	ar[2] = NULL;
 }
-
+//----------------------------------------------
+// GetDays
+// Function takes an unsigned char (1 to 128)
+// and returns the day, in string format
+// PARAMS: days (UCHAR), ar (char array)
+// RETURNS: Nothing; days is converted to string
+//------------------------------------------------
 void GetDays(unsigned char days, char ar[])
 {
 	long i;
@@ -42,7 +65,11 @@ void GetDays(unsigned char days, char ar[])
 		"Wednesday", "Thursday", "Friday", "Saturday" };
 
 	strcpy(ar,"");
-	
+	// days is a binary number
+	// E.g. Sunday = 1; Monday = 2; etc.
+	// This way, we can represent several days by 
+	// OR-ing together days; e.g. 3 = Sunday + Monday
+
 	for (i = 0; i < 7; i++)
 	{	
 		if ((days>>i)&0x1)
@@ -52,7 +79,13 @@ void GetDays(unsigned char days, char ar[])
 		}
 	}
 }
-
+//------------------------------------------------------
+// FirstDay
+// Function takes an integer and returns the first day
+// This is key for sorting programs
+// PARAMS: n (long)
+// RETURNS 1 if day is found; 0 otherwise
+//------------------------------------------------------
 long FirstDay(long n)
 {
 	long i, mask = 0x1;
@@ -67,7 +100,13 @@ long FirstDay(long n)
 	return 0;
 }
 
-
+//----------------------------------------------
+// ViewScheduleDlg
+// Constructor for ViewScheduleDlg class
+// PARAMS: pref (preferences file); ignore (ignore
+// list; add (schedule add list), CWnd (parent)
+// RETURNS: Nothing; class is initialized
+//-----------------------------------------------
 ViewScheduleDlg::ViewScheduleDlg(STREAMRECORD_PREFERENCES *pref, 
 								 IGNORE_LIST *ignore,
 								 SCHEDULE_ADD_LIST *add,
@@ -83,7 +122,13 @@ ViewScheduleDlg::ViewScheduleDlg(STREAMRECORD_PREFERENCES *pref,
 	schedule_box = NULL;
 
 }
-
+//----------------------------------------------
+// ~ViewScheduleDlg
+// Destructor for ViewScheduleDlg class
+// PARAMS: None
+// RETURNS: Nothing; list is deleted and 
+// ScheduleDlg is destroyed
+//----------------------------------------------
 ViewScheduleDlg::~ViewScheduleDlg()
 {
 	DeleteList();
@@ -95,7 +140,13 @@ ViewScheduleDlg::~ViewScheduleDlg()
 	}
 	
 }
-
+//----------------------------------------------
+// DoDataExchange
+// Function takes a pointer to CDataExchange
+// and sends/receives to the control class
+// PARAMS: pDX (CDataExchange pointer)
+// RETURNS: Nothing
+//---------------------------------------------
 
 void ViewScheduleDlg::DoDataExchange(CDataExchange* pDX)
 {
@@ -121,6 +172,13 @@ END_MESSAGE_MAP()
 /////////////////////////////////////////////////////////////////////////////
 // ViewScheduleDlg message handlers
 
+//---------------------------------------
+// OnInitDialog
+// Function is called when dialog box is
+// initialized
+// PARAMS: None
+// RETURNS: Nothing; SetTimer is called
+//---------------------------------------
 BOOL ViewScheduleDlg::OnInitDialog()
 {
 	// TODO: Add extra initialization here
@@ -129,6 +187,13 @@ BOOL ViewScheduleDlg::OnInitDialog()
 
 	return CDialog::OnInitDialog();
 }
+//---------------------------------------
+// FillList
+// Function "fills in" a sequential list
+// of programs
+// PARAMS: None
+// RETURNS: Nothing; list is filled in
+//---------------------------------------
 void ViewScheduleDlg::FillList()
 {
 	long i = 0, j = 0;
@@ -138,7 +203,8 @@ void ViewScheduleDlg::FillList()
 	char days[100];
 	const char repeat[2][10] = { "NO", "YES" };
 	CString tmp;
-
+	// Create a linked list, because it's the easiest
+	// way to create a sequential list
 	list = new linked_list;
 	temp = list;
 
@@ -147,7 +213,7 @@ void ViewScheduleDlg::FillList()
 		LoadDatabase(*ppref);
 		CopySchedule(*ppref);
 	}
-
+	// Iterate through the whole list:
 	for (i = 0; i < ppref->num_entries; i++)
 	{
 		if (ppref->schedule_entry[i].stream_idx != -2
@@ -157,10 +223,11 @@ void ViewScheduleDlg::FillList()
 			&& ppref->schedule_entry[i].visible)
 		{
 			j++;
+			// If it's the first list item, just insert it:
 			if (list->next == NULL && list->prev == NULL && list->n == -1)
 			{
 				list->n = i;
-			}
+			} // else if this program is scheduled before the program in the list, do something:
 			else if (((ppref->schedule_entry[list->n].monitor_mountpoint == 1
 				|| ppref->schedule_entry[list->n].monitor_server == 1)
 				&& ppref->schedule_entry[i].monitor_mountpoint == 0
@@ -174,6 +241,8 @@ void ViewScheduleDlg::FillList()
 				&& ppref->schedule_entry[i].monitor_mountpoint == 0
 				&& ppref->schedule_entry[i].monitor_server == 0))
 			{
+				// While current program is scheduled before program in the list OR this is the beginning of the list, 
+				// go back one item:
 				while (list->prev != NULL 
 					&& (((ppref->schedule_entry[list->prev->n].monitor_mountpoint == 1 
 					|| ppref->schedule_entry[list->prev->n].monitor_server == 1)
@@ -188,7 +257,9 @@ void ViewScheduleDlg::FillList()
 				{
 					list = list->prev;
 				}
-
+				// If this is the beginning of the list,
+				// create a new link at the beginning
+				// and assign current value to it
 				if (list->prev == NULL)
 				{
 					list->prev = new linked_list;
@@ -196,17 +267,23 @@ void ViewScheduleDlg::FillList()
 					list = list->prev;
 					list->n = i;
 				} 
-				else 
+				else //Else create a link in the middle of the list 
 				{
+					// Save a pointer to the previous prev:
 					temp = list->prev;
+					// Create a new link:
 					list->prev = new linked_list;
+					// Link to the current end of list:
 					list->prev->next = list;
+					//Go back one and assign current value:
 					list = list->prev;
 					list->n = i;
+					// Assign list to next of previous prev:
 					temp->next = list;
+					// Finally, assign temp to prev:
 					list->prev = temp;
 				}
-			} 
+			} // Else if current program is scheduled after the program in the list, do something:
 			else if (((ppref->schedule_entry[i].monitor_mountpoint
 				|| ppref->schedule_entry[i].monitor_server)
 				|| (FirstDay(ppref->schedule_entry[i].days) >= FirstDay(ppref->schedule_entry[list->n].days)
@@ -217,6 +294,8 @@ void ViewScheduleDlg::FillList()
 				&& ppref->schedule_entry[i].start_min >= ppref->schedule_entry[list->n].start_min
 				&& !ppref->schedule_entry[list->n].monitor_mountpoint))))
 			{
+				// While current program is scheduled after the program in the list, 
+				// go forward one item:
 				while (list->next != NULL
 					&& (((ppref->schedule_entry[list->next->n].monitor_mountpoint == 0
 					&& ppref->schedule_entry[list->next->n].monitor_server == 0
@@ -232,7 +311,9 @@ void ViewScheduleDlg::FillList()
 				{
 					list = list->next;
 				}
-
+				// If this is the end of the list,
+				// create a new link at the end
+				// and assign current value to it
 				if (list->next == NULL)
 				{
 					list->next = new linked_list;
@@ -240,7 +321,7 @@ void ViewScheduleDlg::FillList()
 					list = list->next;
 					list->n = i;
 				}
-				else
+				else // Else create a link in the middle of the list:
 				{
 					temp = list->next;
 					list->next = new linked_list;
@@ -254,11 +335,14 @@ void ViewScheduleDlg::FillList()
 
 		}
 	}
-
+	// Now that we have create the list, go back to 
+	// the beginning:
 	while (list->prev != NULL)
 		list = list->prev;
 
 	i = 1;
+	// Now all we need to do is iterate through the linked list
+	// and print it out:
 	if (j > 0)
 	{
 		while (list != NULL && list->n < ppref->num_entries)
@@ -315,7 +399,14 @@ void ViewScheduleDlg::FillList()
 	}
 
 }
-
+//--------------------------------------
+// DeleteList
+// Function iterates through a list
+// and deletes all nodes
+// PARAMS: None
+// RETURNS: Nothing; all nodes in the 
+// list are deleted
+//--------------------------------------
 void ViewScheduleDlg::DeleteList()
 {
 	list = temp;
@@ -327,7 +418,14 @@ void ViewScheduleDlg::DeleteList()
 		delete temp;
 	}
 }
-
+//--------------------------------------
+// OnPaint
+// Function invokes FillList and 
+// UpdateData as the screeen is redrawn
+// PARAMS: None
+// RETURNS: Nothing; calls FillList + 
+// UpdateData
+//---------------------------------------
 void ViewScheduleDlg::OnPaint() 
 {
 	CPaintDC dc(this); // device context for painting 
@@ -344,21 +442,31 @@ void ViewScheduleDlg::OnPaint()
 	
 }
 
-
-
+//-----------------------------------------
+// OnLbnDblclkList1
+// Function is invoked when the list is
+// double-clicked; it spawns a ScheduleDlg-
+// derived box representing the item clicked 
+// on
+// PARAMS: None
+// RETURNS: Nothing; spawns a dialog box for
+// the program
+//------------------------------------------
 
 void ViewScheduleDlg::OnLbnDblclkList1()
 {
 	// TODO: Add your control notification handler code here
+	// Get an index #:
 	long i, idx = m_schedule_ls.GetCurSel()/NUM_LINES;
 
 	list = temp;
-
+	// Find the node in the linked list:
 	while (list->prev != NULL)
 		list = list->prev;
 	for (i = 0; i < idx; i++)
 		list = list->next;
-	
+	// Now that we have found the node, spawn a dialog box
+	// if schedule_box equals NULL; if not, invoke MoveToEntry:
 	if (schedule_box == NULL)
 	{
 		schedule_box = new ScheduleDlg(ppref,list->n,pignore,padd);
@@ -372,7 +480,14 @@ void ViewScheduleDlg::OnLbnDblclkList1()
 
 	//MessageBox(str,"SSR",MB_OK);
 }
-
+//------------------------------------------------------
+// OnTimer
+// Function is invoked at a specific time interval
+// If schedule_box needs to be destroyed, it will be
+// destroyed and deleted
+// PARAMS: nIDEvent (UINT_PTR) pointer to the event
+// RETURNS: Nothing
+//------------------------------------------------------
 void ViewScheduleDlg::OnTimer(UINT_PTR nIDEvent)
 {
 	// TODO: Add your message handler code here and/or call default
@@ -427,7 +542,12 @@ void ViewScheduleDlg::OnTimer(UINT_PTR nIDEvent)
 
 	CDialog::OnTimer(nIDEvent);
 }
-
+//--------------------------------------------------
+// OnOK
+// Function is invoked when the OK button is pressed
+// PARAMS: None
+// RETURNS: Nothing; the timers are killed 
+//---------------------------------------------------
 void ViewScheduleDlg::OnOk()
 {
 	// TODO: Add your control notification handler code here
@@ -436,7 +556,14 @@ void ViewScheduleDlg::OnOk()
 
 	CDialog::OnOK();
 }
-
+//---------------------------------------------------------
+// OnScheduler
+// Function is invoked when the Scheduler button is pressed
+// Basically, the a ScheduleDlg-derived dialog box is 
+// invoked and defaults are loaded into the box
+// PARAMS: None
+// RETURNS: Nothing; dialog box is spawned
+//---------------------------------------------------------
 void ViewScheduleDlg::OnScheduler()
 {
 	// TODO: Add your control notification handler code here

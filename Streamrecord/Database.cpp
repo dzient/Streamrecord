@@ -304,9 +304,7 @@ bool Database::SavePreferences(const STREAMRECORD_PREFERENCES& pref,int n)
 	
 
 	db_mutex.Lock();
-	//while (preferences_lock)
-	//	Sleep(1000);
-	preferences_lock = true;
+	
 	ResetConnection(pref);
 	
 
@@ -361,7 +359,7 @@ bool Database::SavePreferences(const STREAMRECORD_PREFERENCES& pref,int n)
 				pref.schedule_entry[i].program, pref.schedule_entry[i].stream_URL, pref.schedule_entry[i].days, daystr.c_str(), pref.schedule_entry[i].start_hr, pref.schedule_entry[i].start_min,
 				pref.schedule_entry[i].end_hr, pref.schedule_entry[i].end_min, pref.schedule_entry[i].repeated, pref.schedule_entry[i].shoutcast, pref.schedule_entry[i].genre, pref.DBpassword);
 			*/
-			sprintf_s(update, "UPDATE schedule SET ProgramName = '%s', URL = '%s', Day = %d, daystr = '%s',StartTimeHour = %d, StartTimeMin = %d, EndTimeHour=%d, EndTimeMin=%d, Repeating=%d, Shoutcast=%d, Genre=%d, Status='%s', Starttime='%s',Endtime='%s', Password='%s', MonitorMountpoint='%d',MonitorServer='%d',ServerLevel='%d',IgnoreMP1='%s',IgnoreMP2='%s',IgnoreMP3='%s',IgnoreMP4='%s',IgnoreMP5='%s',IgnoreMP6='%s', Timeout='%d' WHERE SCHEDULEID = %d",
+			sprintf_s(update, "UPDATE schedule SET ProgramName = '%s', URL = '%s', Day = %d, daystr = '%s',StartTimeHour = %d, StartTimeMin = %d, EndTimeHour=%d, EndTimeMin=%d, Repeating=%d, Shoutcast=%d, Genre=%d, Status='%s', Starttime='%s',Endtime='%s', Password='%s', MonitorMountpoint='%d',MonitorServer='%d',ServerLevel='%d',IgnoreMP1='%s',IgnoreMP2='%s',IgnoreMP3='%s',IgnoreMP4='%s',IgnoreMP5='%s',IgnoreMP6='%s', Timeout='%d', Lastmod='%s' WHERE SCHEDULEID = %d",
 				pref.schedule_entry[i].program, pref.schedule_entry[i].stream_URL, pref.schedule_entry[i].days, daystr.c_str(), pref.schedule_entry[i].start_hr, pref.schedule_entry[i].start_min, pref.schedule_entry[i].end_hr,
 				pref.schedule_entry[i].end_min, pref.schedule_entry[i].repeated, pref.schedule_entry[i].shoutcast, pref.schedule_entry[i].genre, status.c_str(),
 				pref.schedule_entry[i].starttime, pref.schedule_entry[i].endtime, pref.DBpassword,
@@ -369,16 +367,18 @@ bool Database::SavePreferences(const STREAMRECORD_PREFERENCES& pref,int n)
 				pref.schedule_entry[i].ignore_mp[0],pref.schedule_entry[i].ignore_mp[1],pref.schedule_entry[i].ignore_mp[2],
 				pref.schedule_entry[i].ignore_mp[3], pref.schedule_entry[i].ignore_mp[4], pref.schedule_entry[i].ignore_mp[5],
 				pref.schedule_entry[i].timeout,
+				pref.datetime,
 				pref.schedule_entry[i].schedule_id);
 
-			sprintf_s(insert, "INSERT INTO schedule (PROGRAMNAME,URL,DAY,DAYSTR,STARTTIMEHOUR,STARTTIMEMIN,ENDTIMEHOUR,ENDTIMEMIN,REPEATING,SHOUTCAST,GENRE,STATUS,STARTTIME,ENDTIME,PASSWORD,MONITORMOUNTPOINT,MONITORSERVER,SERVERLEVEL, IGNOREMP1,IGNOREMP2,IGNOREMP3,IGNOREMP4,IGNOREMP5,IGNOREMP6,TIMEOUT) VALUES ('%s','%s',%d,'%s',%d,%d,%d,%d,%d,%d,%d,'%s','%s','%s','%s',%d,%d,%d,'%s','%s','%s','%s','%s','%s',%d)",
+			sprintf_s(insert, "INSERT INTO schedule (PROGRAMNAME,URL,DAY,DAYSTR,STARTTIMEHOUR,STARTTIMEMIN,ENDTIMEHOUR,ENDTIMEMIN,REPEATING,SHOUTCAST,GENRE,STATUS,STARTTIME,ENDTIME,PASSWORD,MONITORMOUNTPOINT,MONITORSERVER,SERVERLEVEL, IGNOREMP1,IGNOREMP2,IGNOREMP3,IGNOREMP4,IGNOREMP5,IGNOREMP6,TIMEOUT,LASTMOD) VALUES ('%s','%s',%d,'%s',%d,%d,%d,%d,%d,%d,%d,'%s','%s','%s','%s',%d,%d,%d,'%s','%s','%s','%s','%s','%s',%d,'%s')",
 				pref.schedule_entry[i].program, pref.schedule_entry[i].stream_URL, pref.schedule_entry[i].days, daystr.c_str(), pref.schedule_entry[i].start_hr, pref.schedule_entry[i].start_min,
 				pref.schedule_entry[i].end_hr, pref.schedule_entry[i].end_min, pref.schedule_entry[i].repeated, pref.schedule_entry[i].shoutcast, pref.schedule_entry[i].genre, status.c_str(),
 				pref.schedule_entry[i].starttime, pref.schedule_entry[i].endtime,pref.DBpassword, 
 				pref.schedule_entry[i].monitor_mountpoint,pref.schedule_entry[i].monitor_server,
 				pref.schedule_entry[i].monitor_level,pref.schedule_entry[i].ignore_mp[0],pref.schedule_entry[i].ignore_mp[1],pref.schedule_entry[i].ignore_mp[2],
 				pref.schedule_entry[i].ignore_mp[3], pref.schedule_entry[i].ignore_mp[4], pref.schedule_entry[i].ignore_mp[5],
-				pref.schedule_entry[i].timeout
+				pref.schedule_entry[i].timeout,
+				pref.datetime
 				);
 
 			sprintf_s(update2, "UPDATE recstatus SET LASTMOD = '%s' WHERE STATUSID = 1", pref.datetime);
@@ -397,7 +397,6 @@ bool Database::SavePreferences(const STREAMRECORD_PREFERENCES& pref,int n)
 			}
 			catch (sql::SQLException& e)
 			{
-				preferences_lock = false;
 				LogError(e);
 				ResetConnection(pref);
 				db_mutex.Unlock();
@@ -411,7 +410,6 @@ bool Database::SavePreferences(const STREAMRECORD_PREFERENCES& pref,int n)
 		}
 		catch (sql::SQLException& e)
 		{
-			preferences_lock = false;
 			LogError(e);
 			ResetConnection(pref);
 			db_mutex.Unlock();
@@ -452,7 +450,7 @@ bool Database::SavePreferences(const STREAMRECORD_PREFERENCES& pref,int n)
 
 		sprintf_s(update2, "UPDATE recstatus SET LASTMOD = '%s' WHERE STATUSID = 1", pref.datetime);
 
-		sprintf_s(update, "UPDATE schedule SET ProgramName = '%s', URL = '%s', Day = %d, daystr = '%s',StartTimeHour = %d, StartTimeMin = %d, EndTimeHour=%d, EndTimeMin=%d, Repeating=%d, Shoutcast=%d, Genre=%d, Status='%s', Starttime='%s',Endtime='%s',Password='%s', MonitorMountpoint='%d',MonitorServer='%d',ServerLevel='%d',IgnoreMP1='%s',IgnoreMP2='%s',IgnoreMP3='%s',IgnoreMP4='%s',IgnoreMP5='%s',IgnoreMP6='%s',Timeout=%d WHERE SCHEDULEID = %d",
+		sprintf_s(update, "UPDATE schedule SET ProgramName = '%s', URL = '%s', Day = %d, daystr = '%s',StartTimeHour = %d, StartTimeMin = %d, EndTimeHour=%d, EndTimeMin=%d, Repeating=%d, Shoutcast=%d, Genre=%d, Status='%s', Starttime='%s',Endtime='%s',Password='%s', MonitorMountpoint='%d',MonitorServer='%d',ServerLevel='%d',IgnoreMP1='%s',IgnoreMP2='%s',IgnoreMP3='%s',IgnoreMP4='%s',IgnoreMP5='%s',IgnoreMP6='%s',Timeout=%d, Lastmod='%s' WHERE SCHEDULEID = %d",
 			pref.schedule_entry[n].program, pref.schedule_entry[n].stream_URL, pref.schedule_entry[n].days, daystr.c_str(), pref.schedule_entry[n].start_hr, pref.schedule_entry[n].start_min, pref.schedule_entry[n].end_hr,
 			pref.schedule_entry[n].end_min, pref.schedule_entry[n].repeated, pref.schedule_entry[n].shoutcast, pref.schedule_entry[n].genre, status.c_str(), 
 			pref.schedule_entry[n].starttime,pref.schedule_entry[n].endtime,pref.DBpassword,
@@ -460,16 +458,17 @@ bool Database::SavePreferences(const STREAMRECORD_PREFERENCES& pref,int n)
 			pref.schedule_entry[n].monitor_level, pref.schedule_entry[n].ignore_mp[0], pref.schedule_entry[n].ignore_mp[1], pref.schedule_entry[n].ignore_mp[2],
 			pref.schedule_entry[n].ignore_mp[3], pref.schedule_entry[n].ignore_mp[4], pref.schedule_entry[n].ignore_mp[5],
 			pref.schedule_entry[n].timeout,
+			pref.datetime,
 			pref.schedule_entry[n].schedule_id);
 
-		sprintf_s(insert, "INSERT INTO schedule (PROGRAMNAME,URL,DAY,DAYSTR,STARTTIMEHOUR,STARTTIMEMIN,ENDTIMEHOUR,ENDTIMEMIN,REPEATING,SHOUTCAST,GENRE,STATUS,STARTTIME,ENDTIME,PASSWORD,MONITORMOUNTPOINT,MONITORSERVER,SERVERLEVEL,IGNOREMP1,IGNOREMP2,IGNOREMP3,IGNOREMP4,IGNOREMP5,IGNOREMP6,TIMEOUT) VALUES ('%s','%s',%d,'%s',%d,%d,%d,%d,%d,%d,%d,'%s','%s','%s','%s',%d,%d,%d,'%s','%s','%s','%s','%s','%s',%d)",
+		sprintf_s(insert, "INSERT INTO schedule (PROGRAMNAME,URL,DAY,DAYSTR,STARTTIMEHOUR,STARTTIMEMIN,ENDTIMEHOUR,ENDTIMEMIN,REPEATING,SHOUTCAST,GENRE,STATUS,STARTTIME,ENDTIME,PASSWORD,MONITORMOUNTPOINT,MONITORSERVER,SERVERLEVEL,IGNOREMP1,IGNOREMP2,IGNOREMP3,IGNOREMP4,IGNOREMP5,IGNOREMP6,TIMEOUT,LASTMOD) VALUES ('%s','%s',%d,'%s',%d,%d,%d,%d,%d,%d,%d,'%s','%s','%s','%s',%d,%d,%d,'%s','%s','%s','%s','%s','%s',%d,'%s')",
 			pref.schedule_entry[n].program, pref.schedule_entry[n].stream_URL, pref.schedule_entry[n].days, daystr.c_str(), pref.schedule_entry[n].start_hr, pref.schedule_entry[n].start_min,
 			pref.schedule_entry[n].end_hr, pref.schedule_entry[n].end_min, pref.schedule_entry[n].repeated, pref.schedule_entry[n].shoutcast, pref.schedule_entry[n].genre, status.c_str(), 
 			pref.schedule_entry[n].starttime,pref.schedule_entry[n].endtime,pref.DBpassword,
 			pref.schedule_entry[n].monitor_mountpoint, pref.schedule_entry[n].monitor_server,
 			pref.schedule_entry[n].monitor_level, pref.schedule_entry[n].ignore_mp[0], 
 			pref.schedule_entry[n].ignore_mp[1], pref.schedule_entry[n].ignore_mp[2], pref.schedule_entry[n].ignore_mp[3],
-			pref.schedule_entry[n].ignore_mp[4], pref.schedule_entry[n].ignore_mp[5],pref.schedule_entry[n].timeout);
+			pref.schedule_entry[n].ignore_mp[4], pref.schedule_entry[n].ignore_mp[5],pref.schedule_entry[n].timeout,pref.datetime);
 		
 		/*
 		sprintf_s(update, "UPDATE schedule SET ProgramName = '%s', URL = '%s', Day = %d, daystr = '%s',StartTimeHour = %d, StartTimeMin = %d, EndTimeHour=%d, EndTimeMin=%d, Repeating=%d, Shoutcast=%d, Genre=%d, Status='%s', Password='%s' WHERE SCHEDULEID = %d",
@@ -494,7 +493,6 @@ bool Database::SavePreferences(const STREAMRECORD_PREFERENCES& pref,int n)
 		}
 		catch (sql::SQLException& e)
 		{
-			preferences_lock = false;
 			LogError(e);
 			ResetConnection(pref);
 			db_mutex.Unlock();
@@ -516,7 +514,7 @@ bool Database::SavePreferences(const STREAMRECORD_PREFERENCES& pref,int n)
 
 	}
 	db_mutex.Unlock();
-	preferences_lock = false;
+	
 	return true;
 }
 bool Database::DeletePreferences(const int id)
@@ -541,23 +539,26 @@ bool Database::DeletePreferences(const int id)
 }
 bool Database::LoadPreferences(STREAMRECORD_PREFERENCES& pref)
 {
-	char update[1024];
+	char update[1024],update2[1024];
 	bool rv = false;
-	while (preferences_lock)
-		Sleep(500);
-	preferences_lock = true;
-	////ResetConnection(pref);
-
-	sprintf_s(update, "UPDATE recstatus SET LASTMOD = '%s' WHERE STATUSID = 1", pref.datetime);
-
 	
 
+	if (db_updated)
+	{
+		
+		sprintf_s(update2, "UPDATE schedule SET Lastmod='%s' WHERE SCHEDULEID = %d",
+			pref.datetime,
+			pref.schedule_entry[0].schedule_id);
+	}
+	sprintf_s(update, "UPDATE recstatus SET LASTMOD = '%s' WHERE STATUSID = 1", pref.datetime);
 
 	try
 	{
 		if (stmt != NULL)
 		{
 			rv = stmt->executeUpdate(update);
+			if (db_updated)
+				rv = stmt->executeUpdate(update2);
 			res = stmt->executeQuery("SELECT * FROM Schedule");
 		}
 	}
@@ -570,7 +571,7 @@ bool Database::LoadPreferences(STREAMRECORD_PREFERENCES& pref)
 		return false;
 	}
 	
-	preferences_lock = false;
+	
 	long i = 0;
 
 	
@@ -587,10 +588,7 @@ bool Database::LoadPreferences(STREAMRECORD_PREFERENCES& pref)
 	
 
 	///AfxBeginThread(CopyPref, (LPVOID)&param_ptr, THREAD_PRIORITY_NORMAL);
-	while (preferences_lock)
-		Sleep(1000);
-	///schedule_mutex.Lock();
-	preferences_lock = true;
+	
 	if (!pinit) //pref.schedule_entry == NULL)
 	{
 		pinit = true;
@@ -689,7 +687,7 @@ bool Database::LoadPreferences(STREAMRECORD_PREFERENCES& pref)
 	}
 	catch (sql::SQLException& e)
 	{
-		preferences_lock = false;
+		
 		LogError(e);
 		ResetConnection(pref);
 		
@@ -733,7 +731,7 @@ bool Database::LoadPreferences(STREAMRECORD_PREFERENCES& pref)
 	//memcpy(&pref, temp, sizeof(STREAMRECORD_PREFERENCES));
 	//memcpy(pref.schedule_entry, temp->schedule_entry, sizeof(SCHEDULE) * MAX_SCHEDULE_ENTRIES);
 	///////schedule_mutex.Unlock();
-	preferences_lock = false;
+	
 	db_updated = true;
 	return true;
 }
@@ -747,12 +745,7 @@ bool Database::CopySchedule(STREAMRECORD_PREFERENCES& pref)
 		Sleep(100);
 	if (!db_updated)
 		return false;
-	//if (!preferences_lock)
-	//	return false;
-
-	while (preferences_lock)
-		Sleep(500);
-	preferences_lock = true;
+	
 	///schedule_mutex.Lock();
 	if (temp != NULL && temp->num_entries > 0)
 	{
@@ -864,7 +857,7 @@ bool Database::CopySchedule(STREAMRECORD_PREFERENCES& pref)
 		////schedule_mutex.Unlock();
 		
 	}
-	preferences_lock = false;
+	
 	db_updated = true;
 	init = true;
 	/////schedule_mutex.Unlock();
@@ -964,19 +957,19 @@ bool Database::ResetStatus(const STREAMRECORD_PREFERENCES& pref)
 
 		try
 		{
-			rv = stmt->executeUpdate(update);			
+			if (stmt != NULL)
+				rv = stmt->executeUpdate(update);			
 		}
 		catch (sql::SQLException& e)
 		{
 			LogError(e);
 			ResetConnection(pref);
-			preferences_lock = false;
+			
 			return false;
 		}
-		preferences_lock = false;
 		
 	}
-	preferences_lock = false;
+	
 	return true;
 }
 bool Database::SetStatus(const STREAMRECORD_PREFERENCES& pref,int n)
@@ -988,13 +981,13 @@ bool Database::SetStatus(const STREAMRECORD_PREFERENCES& pref,int n)
 	///	Sleep(500);
 	
 
-	if (pref.schedule_entry != NULL && pref.schedule_entry[n].thread_ptr == NULL)
-		return true;
+	//if (pref.schedule_entry != NULL && pref.schedule_entry[n].thread_ptr == NULL)
+	//	return true;
 
 
 	while (preferences_lock)
 		Sleep(500);
-	preferences_lock = true;
+	
 
 	///ResetConnection(pref);
 
@@ -1028,23 +1021,21 @@ bool Database::SetStatus(const STREAMRECORD_PREFERENCES& pref,int n)
 	{
 		LogError(e);
 		ResetConnection(pref);
-		preferences_lock = false;
+		
 		return false;
 	}
-	preferences_lock = false;
+	
 	return true;
 }
 
 bool Database::SetStatus(const STREAMRECORD_PREFERENCES& pref)
 {
-	while (preferences_lock)
-		Sleep(500);
-	preferences_lock = true;
+	
 	for (int i = 0; i < pref.num_entries; i++)
 		if (pref.schedule_entry[i].thread_ptr != NULL)
 			pref.schedule_entry[i].status = 0;
 
-	preferences_lock = false;
+	
 	return true;
 
 }

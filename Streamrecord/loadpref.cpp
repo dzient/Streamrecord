@@ -5,7 +5,15 @@
 #include <direct.h>
 #include <afxmt.h>
 
-
+//-------------------------------------------
+// David Zientara
+// 11-15-2022
+//
+// Streamrecord.Dlg.cpp
+//
+// File for the StreamrecordDlg classs
+//
+//---------------------------------------------
 
 extern CMutex pref_mutex;
 
@@ -22,6 +30,14 @@ struct db_struct
 	int n;
 } db_params;
 
+//------------------------------------
+// SaveThread
+// Function calls SavePreferences
+// from a thread
+// PARAMS: db_params: pointer to 
+// struct for parameters
+// RETURNS: 1 if succcessful
+//--------------------------------------
 UINT SaveThread(LPVOID db_params)
 {
 	db_struct* db = (db_struct*)db_params;
@@ -30,6 +46,13 @@ UINT SaveThread(LPVOID db_params)
 		Sleep(100);
 	return 1;
 }
+//------------------------------------------
+//CopyScheduleThread
+// Function calls CopySchedule from a thread
+// PARAMS: db_params: pointer to 
+// struct for parameters
+// RETURNS: 1 if succcessful
+//--------------------------------------
 CMutex LDB_mutex;
 UINT CopyScheduleThread(LPVOID db_params)
 {
@@ -40,7 +63,13 @@ UINT CopyScheduleThread(LPVOID db_params)
 	LDB_mutex.Unlock();
 	return 1;
 }
-
+//------------------------------------------
+// LoadDatabaseThread
+// Function calls LoadDatabase from a thread
+// PARAMS: db_params: pointer to 
+// struct for parameters
+// RETURNS: 1 if succcessful
+//--------------------------------------
 UINT LoadDatabaseThread(LPVOID db_params)
 {
 	db_struct* db = (db_struct*)db_params;
@@ -60,29 +89,61 @@ UINT LoadDatabaseThread(LPVOID db_params)
 		//Sleep(100);
 	return 1;
 }
+//------------------------------------------
+// SetStatusThread
+// Function calls SetStatus from a thread
+// It takes a second parameter, indicating 
+// the # of the schedule entry to be updated
+// PARAMS: db_params: pointer to 
+// struct for parameters
+// RETURNS: 1 if succcessful
+//--------------------------------------
 UINT SetStatusThread(LPVOID db_params)
 {
+	LDB_mutex.Lock();
 	db_struct* db = (db_struct*)db_params;
 
 	while (!db->dbptr->SetStatus(*db->pref,db->n))
-		Sleep(100);
+		Sleep(1000);
+	LDB_mutex.Unlock();
 	return 1;
 }
+//----------------------------------------
+// SetStatusOnlyThread
+// Function calls SetStatus from a thread
+// Calling this function sets the status
+// for all programs
+// PARAMS: db_params: pointer to 
+// struct for parameters
+// RETURNS: 1 if succcessful
+//--------------------------------------
 UINT SetStatusOnlyThread(LPVOID db_params)
 {
+	LDB_mutex.Lock();
 	db_struct* db = (db_struct*)db_params;
 
 	while (!db->dbptr->SetStatus(*db->pref))
 		Sleep(100);
+	LDB_mutex.Unlock();
 	return 1;
 }
-
+//----------------------------------------
+// SetStatusOnlyThread
+// Function calls SetStatus from a thread
+// Calling this function sets the status
+// for all programs
+// PARAMS: db_params: pointer to 
+// struct for parameters
+// RETURNS: 1 if succcessful
+//--------------------------------------
 UINT ResetStatusThread(LPVOID db_params)
 {
+	LDB_mutex.Lock();
 	db_struct* db = (db_struct*)db_params;
 
 	while (!db->dbptr->ResetStatus(*db->pref))
 		Sleep(100);
+	LDB_mutex.Unlock();
 	return 1;
 }
 UINT ResetConnectionThread(LPVOID db_params)
@@ -441,7 +502,7 @@ void LoadDatabase(STREAMRECORD_PREFERENCES& pref)
 		db_params.dbptr = dbase;
 		db_params.pref = &pref;
 
-		AfxBeginThread(LoadDatabaseThread, (LPVOID)&db_params, THREAD_PRIORITY_NORMAL);
+		AfxBeginThread(LoadDatabaseThread, (LPVOID)&db_params, THREAD_PRIORITY_BELOW_NORMAL);
 	}
 }
 
@@ -454,7 +515,7 @@ void CopySchedule(STREAMRECORD_PREFERENCES& pref)
 	db_params.dbptr = dbase;
 	db_params.pref = &pref;
 
-	AfxBeginThread(CopyScheduleThread, (LPVOID)&db_params, THREAD_PRIORITY_NORMAL);
+	AfxBeginThread(CopyScheduleThread, (LPVOID)&db_params, THREAD_PRIORITY_BELOW_NORMAL);
 }
 
 void ResetDatabase(const STREAMRECORD_PREFERENCES& pref)
@@ -477,9 +538,9 @@ void ResetStatus(const STREAMRECORD_PREFERENCES& pref)
 	db_params.dbptr = dbase;
 	db_params.pref = (STREAMRECORD_PREFERENCES *)&pref;
 	
-	///AfxBeginThread(ResetStatusThread, (LPVOID)&db_params, THREAD_PRIORITY_HIGHEST);
-	if (!dbase->ResetStatus(pref))
-		Sleep(1000);
+	AfxBeginThread(ResetStatusThread, (LPVOID)&db_params, THREAD_PRIORITY_HIGHEST);
+	///if (!dbase->ResetStatus(pref))
+	//	Sleep(1000);
 }
 void SetStatus(const STREAMRECORD_PREFERENCES& pref, int n)
 {
@@ -488,10 +549,11 @@ void SetStatus(const STREAMRECORD_PREFERENCES& pref, int n)
 	
 	db_params.dbptr = dbase;
 	db_params.pref = (STREAMRECORD_PREFERENCES *)&pref;
+	db_params.n = n;
 	
-	//AfxBeginThread(SetStatusThread, (LPVOID)&db_params, THREAD_PRIORITY_HIGHEST);
-	if (!dbase->SetStatus(pref, n))
-		Sleep(1000);
+	AfxBeginThread(SetStatusThread, (LPVOID)&db_params, THREAD_PRIORITY_HIGHEST);
+//	if (!dbase->SetStatus(pref, n))
+//		Sleep(1000);
 }
 
 void ResetConnection(const STREAMRECORD_PREFERENCES& pref)

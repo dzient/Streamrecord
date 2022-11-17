@@ -461,9 +461,9 @@ BOOL CStreamrecordDlg::OnInitDialog()
 	SetTimer(TIMER_ID_4,30000,0);
 	SetTimer(TIMER_ID_5,pref.DBinterval*1000, 0);
 	SetTimer(TIMER_ID_6, 3600000, 0);
-	SetTimer(TIMER_ID_7, 600000, 0);
-	SetTimer(TIMER_ID_8, 60000, 0);
-	///SetTimer(TIMER_ID_9,60000, 0);
+	//SetTimer(TIMER_ID_7, 600000, 0);
+	//SetTimer(TIMER_ID_8, 60000, 0);
+	///SetTimer(TIMER_ID_9,300000, 0);
 	
 
 	m_play_button.SetBitmap(::LoadBitmap( AfxGetApp()->m_hInstance,MAKEINTRESOURCE(IDB_BITMAP5)));
@@ -1087,7 +1087,7 @@ void CStreamrecordDlg::CheckForScheduledEvents()
 
 	day_mask = (unsigned int)pow((double)2.0,(double)(day-1));
 
-	if ((day - 2) >= 0)
+	if (day > 1)
 		daytwo_mask = (unsigned int)pow((double)2.0, (double)(day - 2));
 	else
 		daytwo_mask = 64;
@@ -1550,27 +1550,56 @@ void CStreamrecordDlg::CheckForScheduledEvents()
 }
 
 
-
+//---------------------------------------
+// OnKillfocusEdit4
+// Function is called when the Recording
+// path edit box loses focus
+// PARAMS: None
+// RETURNS: Nothing
+//---------------------------------------
 void CStreamrecordDlg::OnKillfocusEdit4() 
 {
 	// TODO: Add your control notification handler code here
 	UpdateData(TRUE);
 	path_changed = true;
 }
-
+//---------------------------------------
+// OnCheck1
+// Function is called when the Shoutcast
+// check box is clicked
+// PARAMS: None
+// RETURNS: Nothing; shoutcast is toggled
+// to TRUE or FALSE
+//----------------------------------------
 void CStreamrecordDlg::OnCheck1()
 {
 	m_shoutcast = !m_shoutcast;
 	UpdateData(FALSE);
 }
-
+//---------------------------------------
+// OnAboutProgram
+// Function displays the About dialog 
+// box
+// PARAMS: None
+// RETURNS: Nothing; About dialog box
+// is displayed
+//---------------------------------------
 void CStreamrecordDlg::OnAboutProgram()
 {
 	CAboutDlg box;
 
 	box.DoModal();
 }
-
+//------------------------------------------
+// OnTimer
+// Function is called when a timer 
+// interval is reached
+// PARAMS: UINT_PTR (nIDEvent) - this is
+// the specific timer that is invoked; code
+// is run by invoking a switch-case statement
+// RETURNS: Nothing; code is run based on
+// a specific timer
+//--------------------------------------------
 void CStreamrecordDlg::OnTimer(UINT_PTR nIDEvent) 
 {
 	// TODO: Add your message handler code here and/or call default
@@ -1584,6 +1613,7 @@ void CStreamrecordDlg::OnTimer(UINT_PTR nIDEvent)
 	switch (nIDEvent)
 	{
 	case TIMER_ID:
+		// Check for scheduled events every 5 seconds:
 		if (dialog_init)
 		{
 			CheckForScheduledEvents();
@@ -1606,12 +1636,14 @@ void CStreamrecordDlg::OnTimer(UINT_PTR nIDEvent)
 		}
 		break;
 	case TIMER_ID_2:
+		// Check the server every 10 seconds:
 		dialog_params.dlg_ptr = this;
 		/////AfxBeginThread(CheckServerStatus, (LPVOID)&dialog_params, THREAD_PRIORITY_NORMAL);
 		CheckServer();
 
 		break;
 	case TIMER_ID_3:
+		// If the stop dialog box needs to be destroyed, destroy it here:
 		if (stop_box != NULL && stop_box->IsDestroyed())
 		{
 			stop_box->DestroyWindow();
@@ -1620,20 +1652,21 @@ void CStreamrecordDlg::OnTimer(UINT_PTR nIDEvent)
 		}
 		break;
 	case TIMER_ID_4:
+		// Set last_recording to a blank space:
 		last_recording = " ";
 		break;
 	case TIMER_ID_5:
+		// Load the database + copy it to preferences
+		// every N seconds:
 		if (dialog_init && pref.database) // && pref.no_load)
 		{
 			LoadDatabase(pref);
 			CopySchedule(pref);
-		}
-			
-			break;
-			//	LoadDatabase(pref);
-				//AfxBeginThread(LoadPref, (LPVOID)&parse_params, THREAD_PRIORITY_NORMAL);
-				//LoadPreferences(PREF_FILE, pref, ignore, add);
-		case TIMER_ID_6:
+		}	
+		break;
+	case TIMER_ID_6:
+		// Reset the status every hour
+		// Basically, this resets "Done recording" to "Queued"
 			if (dialog_init && pref.database)
 				ResetStatus(pref);
 			break;
@@ -1645,15 +1678,22 @@ void CStreamrecordDlg::OnTimer(UINT_PTR nIDEvent)
 				ResetConnection(pref);
 			break;
 		case TIMER_ID_9:
-			//if (dialog_init && pref.database)
-			//	SetStatus(pref);
+			///if (dialog_init && pref.database)
+			///	SetStatus(pref);
 			break;
 		default: break;
 	}
 	
 	CDialog::OnTimer(nIDEvent);
 }
-
+//---------------------------------------------
+// OnPlayFile
+// Function is called when the Play button is 
+// pressed
+// PARAMS: None
+// RETURNS: Nothing
+// This function is disabled
+//---------------------------------------------
 void CStreamrecordDlg::OnPlayFile()
 {
 	// TODO: Add your control notification handler code here
@@ -1690,7 +1730,13 @@ void CStreamrecordDlg::OnPlayFile()
 		MessageBoxA(NULL,LPCSTR(tmp),PROGRAM_NAME,MB_OK|MB_ICONEXCLAMATION);
 	}
 }
-
+//-----------------------------------------------
+// OnStopFile
+// Function is called when Stop button is pressed
+// PARAMS: None
+// RETURNS: Nothing
+// This function is disabled
+//-----------------------------------------------
 void CStreamrecordDlg::OnStopFile()
 {
 	// TODO: Add your control notification handler code here
@@ -1699,13 +1745,25 @@ void CStreamrecordDlg::OnStopFile()
 	///player->Stop();
 	m_pause_button.SetBitmap(::LoadBitmap( AfxGetApp()->m_hInstance,MAKEINTRESOURCE(IDB_BITMAP7)));
 }
-
+//-----------------------------------------------
+// OnEnKillFocusEdit5
+// Function is called when the Sound file edit
+// box loses focus
+// PARAMS: None
+// RETURNS: Nothing
+//----------------------------------------------- 
 void CStreamrecordDlg::OnEnKillfocusEdit5()
 {
 	// TODO: Add your control notification handler code here
 	UpdateData(TRUE);
 }
-
+//--------------------------------------------------------
+// OnPauseFile
+// Function is called when the Pause button is pressed
+// PARAMS: None
+// RETURNS: Nothing
+// This function is disabled
+//--------------------------------------------------------
 void CStreamrecordDlg::OnPauseFile()
 {
 	// TODO: Add your control notification handler code
@@ -1723,7 +1781,12 @@ void CStreamrecordDlg::OnPauseFile()
 
 	paused = !paused;
 }
-
+//--------------------------------------------------------
+// OnBrowseSoundFile
+// Function is called when the Browse button is pressed
+// PARAMS: None
+// RETURNS: Nothing
+//--------------------------------------------------------
 void CStreamrecordDlg::OnBrowseSoundFile()
 {
 	// TODO: Add your control notification handler code here
@@ -1739,7 +1802,14 @@ void CStreamrecordDlg::OnBrowseSoundFile()
 
 	UpdateData(FALSE);
 }
-
+//--------------------------------------------------------
+// OnCancel
+// Function is called when the Exit Program button is
+// pressed
+// PARAMS: None
+// RETURNS: Nothing; dialog box contents are copied to
+// preferences and database and preferences is saved
+//--------------------------------------------------------
 void CStreamrecordDlg::OnCancel()
 {
 	if (MessageBoxA(NULL,"Exit program?",PROGRAM_NAME,MB_YESNO) == IDYES)
@@ -1772,6 +1842,14 @@ void CStreamrecordDlg::OnCancel()
 		CDialog::OnCancel();
 	}
 }
+//--------------------------------------------------------
+// OnNMReleasedcaptureSlider1
+// Function is called when the slider is released
+// PARAMS: NMHDR (pointer) - slider
+// LRESULT (pointer) - the result
+// RETURNS: Nothing
+// This function has been disabled
+//----------------------------------------------------------
 void CStreamrecordDlg::OnNMReleasedcaptureSlider1(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	// TODO: Add your control notification handler code here
@@ -1802,7 +1880,14 @@ void CStreamrecordDlg::OnNMReleasedcaptureSlider1(NMHDR *pNMHDR, LRESULT *pResul
 }
 
 
-
+//-------------------------------------------------
+// OnEnterActivationCode
+// Function is called when the activation code is
+// entered
+// PARAMS: None
+// RETURNS: Nothing
+// This function has been disabled
+//--------------------------------------------------
 void CStreamrecordDlg::OnEnterActivationCode()
 {
 	// TODO: Add your control notification handler code here
@@ -1811,7 +1896,13 @@ void CStreamrecordDlg::OnEnterActivationCode()
 	box.DoModal();
 	GetDlgItem(IDC_BUTTON9)->EnableWindow(!pref.code_is_good);
 }
-
+//-------------------------------------------------
+// OnBnClickedCheck2
+// Function is called when a sound file can be 
+// played instead of a beep
+// PARAMS: None
+// RETURNS: Nothing
+//--------------------------------------------------
 
 void CStreamrecordDlg::OnBnClickedCheck2()
 {
@@ -1819,13 +1910,25 @@ void CStreamrecordDlg::OnBnClickedCheck2()
 	m_play_sound_file = !m_play_sound_file;
 	UpdateData(FALSE);
 }
-
+//-------------------------------------------------
+// OnEnKillfocusEdit7
+// Function is called when the recording start
+// sound file edit box loses focus
+// PARAMS: None
+// RETURNS: Nothing
+//-------------------------------------------------
 void CStreamrecordDlg::OnEnKillfocusEdit7()
 {
 	// TODO: Add your control notification handler code here
 	UpdateData(TRUE);
 }
-
+//-------------------------------------------------
+// OnBnClickedButton10
+// Function is called when the Browse button is
+// pressed
+// PARAMS: None
+// RETURNS: Nothing
+//-------------------------------------------------
 void CStreamrecordDlg::OnBnClickedButton10()
 {
 	// TODO: Add your control notification handler code here
@@ -1839,7 +1942,13 @@ void CStreamrecordDlg::OnBnClickedButton10()
 
 	UpdateData(FALSE);
 }
-
+//-------------------------------------------------
+// OnBnClickedCheck3
+// Function is called when the No Subdirectories
+// check box is clicked on
+// PARAMS: None
+// RETURNS: Nothing; m_nosubdirs is toggled
+//--------------------------------------------------
 void CStreamrecordDlg::OnBnClickedCheck3()
 {
 	// TODO: Add your control notification handler code here
@@ -1847,7 +1956,13 @@ void CStreamrecordDlg::OnBnClickedCheck3()
 	pref.no_subdirs = m_nosubdirs;
 	UpdateData(FALSE);
 }
-
+//-------------------------------------------------
+// OnBnClickedCheck4
+// Function is called when the Enable Sounds
+// check box is clicked on
+// PARAMS: None
+// RETURNS: Nothing; m_enable_sounds is toggled
+//-------------------------------------------------
 void CStreamrecordDlg::OnBnClickedCheck4()
 {
 	// TODO: Add your control notification handler code here
@@ -1855,7 +1970,13 @@ void CStreamrecordDlg::OnBnClickedCheck4()
 	pref.enable_sounds = m_enable_sounds;
 	UpdateData(FALSE);
 }
-
+//-------------------------------------------------
+// OnBnClickedButton11
+// Function is called when the Browse button is 
+// pressed 
+// PARAMS: None
+// RETURNS: Nothing
+//-------------------------------------------------
 void CStreamrecordDlg::OnBnClickedButton11()
 {
 	// TODO: Add your control notification handler code here
@@ -1867,7 +1988,14 @@ void CStreamrecordDlg::OnBnClickedButton11()
 
 	UpdateData(FALSE);
 }
-
+//-------------------------------------------------
+// OnBnClickedButton12
+// Function is called when the Stop button is
+// pressed
+// PARAMS: None
+// RETURNS: Nothing; the Stop dialog box is
+// spawned
+//-------------------------------------------------
 void CStreamrecordDlg::OnBnClickedButton12()
 {
 	// TODO: Add your control notification handler code here
@@ -1882,7 +2010,13 @@ void CStreamrecordDlg::OnBnClickedButton12()
 	stop_box->Create(IDD_DIALOG6);
 	stop_box->ShowWindow(SW_SHOW);
 }
-
+//-----------------------------------------------------
+// OnBnClickedButton13
+// Function is called when the IRC button is pressed
+// PARAMS: None
+// RETURNS: Nothing; parameters are copied and
+// the IRC object is stopped and started
+// 
 void CStreamrecordDlg::OnBnClickedButton13()
 {
 	// TODO: Add your control notification handler code here
@@ -1902,13 +2036,24 @@ void CStreamrecordDlg::OnBnClickedButton13()
 		}
 	}
 }
-
+//-----------------------------------------------------
+// OnOK
+// Function is called when the OK button is clicked
+// PARAMS: None
+// RETURNS: Nothing
+//------------------------------------------------------
 void CAboutDlg::OnBnClickedOk()
 {
 	// TODO: Add your control notification handler code here
 	OnOK();
 }
-
+//-----------------------------------------------------
+// OnBnClickedButton14
+// Function is called when the Chat Dialog button is
+// pressed
+// PARAMS: None
+// RETURNS: Nothing; Chat dialog box is spawned
+//----------------------------------------------------
 void CStreamrecordDlg::OnBnClickedButton14()
 {
 	// TODO: Add your control notification handler code here
@@ -1919,7 +2064,14 @@ void CStreamrecordDlg::OnBnClickedButton14()
 	else
 		MessageBoxA(NULL,LPCSTR("No IRC session established."),PROGRAM_NAME,MB_OK|MB_ICONEXCLAMATION);
 }
-
+//-----------------------------------------------------
+// OnBnClickedDatabaseSettings
+// Function is called when the Database Settings button
+// is clicked
+// PARAMS: None
+// RETURNS: Nothing; Database Settings dialog box is
+// spawned
+//------------------------------------------------------
 void CStreamrecordDlg::OnBnClickedDatabaseSettings()
 {
 	CDatabaseSettingsDlg box(&pref, &ignore, &add);
@@ -1928,14 +2080,27 @@ void CStreamrecordDlg::OnBnClickedDatabaseSettings()
 
 	//if (box.DoModal() == IDOK);
 }
-
+//-----------------------------------------------------
+// OnBnClickedSync
+// Function is called when the Sync button is clicked
+// PARAMS: None
+// RETURNS: Nothing; LoadDatabase and CopySchedule
+// functions are called
+//------------------------------------------------------
 void CStreamrecordDlg::OnBnClickedSync()
 {
 	// TODO: Add your control notification handler code here
 	LoadDatabase(pref);
 	CopySchedule(pref);
 }
-
+//-----------------------------------------------------
+// OnBnClickedResetDatabase
+// Function is called when the ResetDatabase button is
+// pressed
+// PARAMS: None
+// RETURNS: Nothing; ResetTable button is pressed
+// (calls TRUNCATE_TABLE, which clears the table)
+//-------------------------------------------------------
 
 void CStreamrecordDlg::OnBnClickedResetDatabase()
 {
