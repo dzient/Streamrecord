@@ -138,6 +138,10 @@ public:
 	afx_msg void OnBnClickedResetDatabase();
 	// //Enable database settings dialog box on startup
 	BOOL m_enable_dbox;
+	// //Enables or disables push notifications
+	BOOL m_pushover;
+	afx_msg void OnBnClickedEnableDatabaseSettings();
+	afx_msg void OnBnClickedCheck7();
 };
 
 //{{AFX_INSERT_LOCATION}}

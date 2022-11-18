@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "loadpref.h"
 #include "Database.h"
+#include "Pushover.h"
 
 #include <direct.h>
 #include <afxmt.h>
@@ -22,13 +23,17 @@ extern CMutex server_mutex;
 char working_dir[1024];
 
 Database* dbase = NULL;
+Pushover* push = NULL;
 
 struct db_struct
 {
 	Database* dbptr;
+	Pushover* poptr;
 	STREAMRECORD_PREFERENCES* pref;
 	int n;
+	char msg[256];
 } db_params;
+
 
 //------------------------------------
 // SaveThread
@@ -53,7 +58,21 @@ UINT SaveThread(LPVOID db_params)
 // struct for parameters
 // RETURNS: 1 if succcessful
 //--------------------------------------
-CMutex LDB_mutex;
+CMutex LDB_mutex, push_mutex;
+
+UINT PushMessageThread(LPVOID db_params)
+{
+	LDB_mutex.Lock();
+	push_mutex.Lock();
+
+	db_struct* db = (db_struct*)db_params;
+
+	db->poptr->PushMessage(db->msg);
+
+	push_mutex.Unlock();
+	LDB_mutex.Unlock();
+	return 1;
+}
 UINT CopyScheduleThread(LPVOID db_params)
 {
 	LDB_mutex.Lock();
@@ -146,6 +165,13 @@ UINT ResetStatusThread(LPVOID db_params)
 	LDB_mutex.Unlock();
 	return 1;
 }
+//-------------------------------------------------
+// ResetConnectionThread
+// Function calls ResetConnection from a thread
+// PARAMS: db_params: pointer to 
+// struct for parameters
+// RETURNS: 1 if succcessful
+//--------------------------------------
 UINT ResetConnectionThread(LPVOID db_params)
 {
 	db_struct* db = (db_struct*)db_params;
@@ -154,7 +180,13 @@ UINT ResetConnectionThread(LPVOID db_params)
 		Sleep(100);
 	return 1;
 }
-
+//-----------------------------------------------
+// chartoWchar
+// Function converts an array of chars to an
+// array of wide chars
+// PARAMS: text (array of chars)
+// RETURNS: array of wchar_t
+//------------------------------------------------
 
 static wchar_t* charToWChar(const char* text)
 {
@@ -163,7 +195,15 @@ static wchar_t* charToWChar(const char* text)
 	mbstowcs(wText, text, size);
 	return wText;
 }
-
+//--------------------------------------------------
+// LoadPreferences
+// Function loads preferencs from disk and
+// loads databse/copies to preferences if database
+// is enabled
+// PARAMS: pref_file (array of chars), pref (preferences),
+// ignore (IGNORE_LIST), add (SCHEDULE_ADD_LIST)
+// RETURNS: 1 if successful, 0 otherwise
+//---------------------------------------------------
 int LoadPreferences(const char *pref_file, STREAMRECORD_PREFERENCES& pref,
 					IGNORE_LIST& ignore, SCHEDULE_ADD_LIST& add)
 {
@@ -298,7 +338,16 @@ int LoadPreferences(const char *pref_file, STREAMRECORD_PREFERENCES& pref,
 
 	return 1; // Success! 
 }
-
+//--------------------------------------------
+// SavePreferences
+// Function saves the preferences to disk
+// If database is enabled, it saves the
+// database
+// PARAMS: pref_file (array of chars),
+// pref (preferences), ignore (IGNORE_LIST),
+// add (SCHEDULE_ADD_LIST)
+// RETURNS: 1 if successful, 0 otherwise
+//--------------------------------------------
 int SavePreferences(const char *pref_file, 
 					const STREAMRECORD_PREFERENCES& pref,
 					const IGNORE_LIST& ignore,
@@ -345,12 +394,27 @@ int SavePreferences(const char *pref_file,
 
 	return 1; // Success!
 }
-
+//-----------------------------------
+// GetWorkingDirectory
+// Function returns the working
+// directory
+// PARAMS: None
+// RETURNS: The working directory
+//--------------------------------------
 char * GetWorkingDirectory()
 {
 	return working_dir;
 }
-
+//----------------------------------------------
+// ConsolidateSchedule
+// Function takes all entries with
+// a stream_idx of -2 and deletes them
+// Effectively, this deletes all programs that
+// [1] have been flagged as one-time recordings 
+// and [2] have been recorded
+// PARAMS: pref (preferences)
+// RETURNS: Nothing; schedule is consolidated
+//----------------------------------------------
 void ConsolidateSchedule(STREAMRECORD_PREFERENCES *pref)
 {
 	long i = 0, j;
@@ -371,7 +435,13 @@ void ConsolidateSchedule(STREAMRECORD_PREFERENCES *pref)
 	}
 	pref_mutex.Unlock();
 }
-
+//----------------------------------------------
+// ConsolidateIgnoreList
+// Function takes all ignore entries with a 
+// mountpoint_URL of NULL and deletes them
+// PARAMS: ignore (IGNORE_LIST)
+// RETURNS: Nothing; ignore list is consolidated
+//-----------------------------------------------
 void ConsolidateIgnoreList(IGNORE_LIST *ignore)
 {
 	long i = 0, j;
@@ -390,7 +460,18 @@ void ConsolidateIgnoreList(IGNORE_LIST *ignore)
 		}
 	}
 }
-
+//----------------------------------------------
+// ConsolidateAddSchedule
+// Function takes all entries with
+// a stream_idx of -2 and deletes them
+// Effectively, this deletes all programs that
+// [1] have been flagged as one-time recordings 
+// and [2] have been recorded
+// Does the same thing, only for added schedule 
+// members
+// PARAMS: pref (preferences)
+// RETURNS: Nothing; schedule is consolidated
+//----------------------------------------------
 void ConsolidateAddList(SCHEDULE_ADD_LIST *add)
 {
 	long i = 0, j;
@@ -409,7 +490,14 @@ void ConsolidateAddList(SCHEDULE_ADD_LIST *add)
 		}
 	}
 }
-
+//----------------------------------------------------------------
+// CopyString
+// Function takes a CString argument and converts it to an array
+// of chars
+// PARAMS: dest (array of chars), source (CString), maxlen(USHORT)
+// (maxlen is optional)
+// RETURNS: Nothing; source is copied to dest
+//-----------------------------------------------------------------
 void CopyString(char dest[], CString source, unsigned short maxlen)
 {
 	unsigned long i;
@@ -421,7 +509,14 @@ void CopyString(char dest[], CString source, unsigned short maxlen)
 	else
 		dest[maxlen - 1] = NULL;
 }
-
+//----------------------------------------------------------------
+// CopyString
+// Function takes an array of chars and converts it to CString 
+// variable
+// PARAMS: dest (CString), source (array of chars), maxlen(USHORT)
+// (maxlen is optional)
+// RETURNS: Nothing; source is copied to dest
+//----------------------------------------------------------------
 void CopyString(CString& dest, char source[], unsigned short maxlen)
 {
 	unsigned long i;
@@ -430,7 +525,14 @@ void CopyString(CString& dest, char source[], unsigned short maxlen)
 	for (i = 0; i < strlen(source) && i < maxlen; i++)
 		dest += source[i];
 }
-
+//----------------------------------------------------------------
+// ConvertString 
+// Function takes a char array and converts it to a wchar array
+// (Needed for mimizing to systray)
+// PARAMS: conv_str (array of wchar), str (array of char),
+// maxlen (unsigned short)
+// RETURNS: Nothing; string is converted to array of wchars
+//----------------------------------------------------------------
 void ConvertString(wchar_t conv_str[], char str[], unsigned short maxlen)
 {
 	unsigned long i;
@@ -442,6 +544,14 @@ void ConvertString(wchar_t conv_str[], char str[], unsigned short maxlen)
 	else
 		conv_str[maxlen - 1] = NULL;
 }
+//----------------------------------------------------------------
+// ConvertString 
+// Function takes a wchar array and converts it to a char array
+// (Needed for mimizing to systray)
+// PARAMS: conv_str (array of wchar), str (array of char),
+// maxlen (unsigned short)
+// RETURNS: Nothing; string is converted to array of wchars
+//----------------------------------------------------------------
 
 void ConvertString(char conv_str[], wchar_t str[], unsigned short maxlen)
 {
@@ -587,4 +697,17 @@ bool SetStatus(const STREAMRECORD_PREFERENCES& pref)
 
 	AfxBeginThread(SetStatusOnlyThread, (LPVOID)&db_params, THREAD_PRIORITY_HIGHEST);
 	return true;
+}
+void PushMessage(const STREAMRECORD_PREFERENCES *pref, char msg[])
+{
+	if (push == NULL)
+		push = new Pushover(pref);
+
+	db_params.poptr = push;
+	strcpy(db_params.msg, msg);
+	////db_params.pref = (STREAMRECORD_PREFERENCES*)&pref;
+	AfxBeginThread(PushMessageThread, (LPVOID)&db_params, THREAD_PRIORITY_BELOW_NORMAL);
+
+
+	//push->PushMessage(msg);
 }

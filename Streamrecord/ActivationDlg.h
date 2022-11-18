@@ -32,4 +32,5 @@ public:
 	afx_msg void OnEnSetfocusEdit1();
 	afx_msg void OnBnClickedDatabase();
 	afx_msg void OnBnClickedDatabaseSettings();
+	afx_msg void OnBnClickedEnableDatabaseSettings();
 };

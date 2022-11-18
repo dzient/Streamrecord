@@ -39,6 +39,7 @@ BEGIN_MESSAGE_MAP(ActivationDlg, CDialog)
 	ON_EN_SETFOCUS(IDC_EDIT1, OnEnSetfocusEdit1)
 	ON_BN_CLICKED(IDC_CHECK5, &ActivationDlg::OnBnClickedDatabase)
 	ON_BN_CLICKED(IDC_BUTTON15, &ActivationDlg::OnBnClickedDatabaseSettings)
+	ON_BN_CLICKED(IDC_CHECK6, &ActivationDlg::OnBnClickedEnableDatabaseSettings)
 END_MESSAGE_MAP()
 
 
@@ -96,3 +97,9 @@ void ActivationDlg::OnBnClickedDatabaseSettings()
 }
 
 
+
+
+void ActivationDlg::OnBnClickedEnableDatabaseSettings()
+{
+	// TODO: Add your control notification handler code here
+}

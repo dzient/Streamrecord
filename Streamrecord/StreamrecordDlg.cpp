@@ -38,6 +38,7 @@
 #include "IRCSettingsDlg.h"
 #include "IRCChatDlg.h"
 #include "Database.h"
+#include "Pushover.h"
 #include "CDatabaseSettingsDlg.h"
 
 
@@ -67,6 +68,9 @@ StreamInstance *stream_ptr = NULL;
 StreamPtr stream_array[MAX_STREAMS];
 HINSTANCE dllhandle;
 CWinThread *threadPtr = NULL;
+
+extern Database* dbase;
+extern Pushover* push;
 
 ////using namespace libZPlay;
 
@@ -231,6 +235,7 @@ CStreamrecordDlg::CStreamrecordDlg(CWnd* pParent /*=NULL*/)
 	, m_database(FALSE)
 	, m_password(_T(""))
 	, m_enable_dbox(FALSE)
+	, m_pushover(FALSE)
 {
 	
 	_getcwd(curdir, 1023);
@@ -239,7 +244,7 @@ CStreamrecordDlg::CStreamrecordDlg(CWnd* pParent /*=NULL*/)
 	memset(stream_array,0,sizeof(StreamPtr)*MAX_STREAMS);
 	LoadPreferences(PREF_FILE, pref, ignore, add);
 	CDatabaseSettingsDlg box(&pref, &ignore, &add);
-	if (pref.database && pref.enable_dbox)
+	if (pref.enable_dbox)
 		box.DoModal();
 	//{{AFX_DATA_INIT(CStreamrecordDlg)
 	m_enable_dbox = pref.enable_dbox;
@@ -256,6 +261,7 @@ CStreamrecordDlg::CStreamrecordDlg(CWnd* pParent /*=NULL*/)
 	m_enable_sounds = pref.enable_sounds;
 	m_database = pref.database;
 	m_password = pref.DBpassword;
+	m_pushover = pref.pushover;
 	//}}AFX_DATA_INIT
 	// Note that LoadIcon does not require a subsequent DestroyIcon in Win32
 	m_hIcon = AfxGetApp()->LoadIcon(IDI_ICON2);
@@ -370,6 +376,7 @@ void CStreamrecordDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_CHECK5, m_database);
 	DDX_Text(pDX, IDC_EDIT8, m_password);
 	DDX_Check(pDX, IDC_CHECK6, m_enable_dbox);
+	DDX_Check(pDX, IDC_CHECK7, m_pushover);
 }
 
 BEGIN_MESSAGE_MAP(CStreamrecordDlg, CDialog)
@@ -409,6 +416,8 @@ BEGIN_MESSAGE_MAP(CStreamrecordDlg, CDialog)
 	ON_BN_CLICKED(IDC_CHECK5, OnBnClickedDatabase)
 	ON_BN_CLICKED(IDC_BUTTON16, &CStreamrecordDlg::OnBnClickedSync)
 	ON_BN_CLICKED(IDC_BUTTON17, &CStreamrecordDlg::OnBnClickedResetDatabase)
+	ON_BN_CLICKED(IDC_CHECK6, &CStreamrecordDlg::OnBnClickedEnableDatabaseSettings)
+	ON_BN_CLICKED(IDC_CHECK7, &CStreamrecordDlg::OnBnClickedCheck7)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -765,6 +774,7 @@ void CStreamrecordDlg::OnOK()
 	pref.enable_sounds = m_enable_sounds;
 	pref.database = m_database;
 	pref.enable_dbox = m_enable_dbox;
+	pref.pushover = m_pushover;
 	KillTimer(TIMER_ID);
 	KillTimer(TIMER_ID_2);
 	KillTimer(TIMER_ID_3);
@@ -789,6 +799,8 @@ void CStreamrecordDlg::OnOK()
 	}
 	if (dbase != NULL)
 		delete dbase;
+	if (push != NULL)
+		delete push;
 	CDialog::OnOK();
 }
 //----------------------------------------------------------
@@ -1835,10 +1847,15 @@ void CStreamrecordDlg::OnCancel()
 		pref.shoutcast = m_shoutcast;
 		pref.database = m_database;
 		pref.enable_dbox = m_enable_dbox;
+		pref.pushover = m_pushover;
 		Cleanup();
 		SavePreferences(PREF_FILE,pref,ignore,add);	
 		KillTimer(TIMER_ID);
 		KillTimer(TIMER_ID_2);
+		if (dbase != NULL)
+			delete dbase;
+		if (push != NULL)
+			delete push;
 		CDialog::OnCancel();
 	}
 }
@@ -2110,4 +2127,20 @@ void CStreamrecordDlg::OnBnClickedResetDatabase()
 		ResetTable(pref);
 		MessageBoxA(NULL, LPCSTR("Database has been reset."), PROGRAM_NAME, MB_OK);
 	}
+}
+
+
+void CStreamrecordDlg::OnBnClickedEnableDatabaseSettings()
+{
+	// TODO: Add your control notification handler code here
+	m_enable_dbox = !m_enable_dbox;
+	pref.enable_dbox = m_enable_dbox;
+}
+
+
+void CStreamrecordDlg::OnBnClickedCheck7()
+{
+	// TODO: Add your control notification handler code here
+	m_pushover = !m_pushover;
+	pref.pushover = m_pushover;
 }

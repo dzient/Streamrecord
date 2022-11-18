@@ -200,6 +200,7 @@
     <ClInclude Include="Parse.h" />
     <ClInclude Include="parseserver.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="Pushover.h" />
     <ClInclude Include="RecordMountpointDlg.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="ScheduleDlg.h" />
@@ -232,6 +233,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Pushover.cpp" />
     <ClCompile Include="RecordMountpointDlg.cpp" />
     <ClCompile Include="ScheduleDlg.cpp" />
     <ClCompile Include="StdAfx.cpp" />

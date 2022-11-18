@@ -58,6 +58,7 @@ struct SCHEDULE
 	char starttime[10];
 	char endtime[10];
 	
+	
 	char reserved[12];
 	SCHEDULE()
 	{
@@ -218,8 +219,9 @@ struct STREAMRECORD_PREFERENCES
 	char DBinterval;
 	char datetime[25];
 	char enable_dbox;
+	char pushover;
 	
-	char reserved[256]; 
+	char reserved[255]; 
 
 	SCHEDULE *schedule_entry;
 	
@@ -229,6 +231,7 @@ struct STREAMRECORD_PREFERENCES
 	{
 		///completed = FALSE;
 		no_load = false;
+		pushover = 0;
 		strcpy(stream_URL,"sample");
 		strcpy(output_filename,"output.mp3");
 		strcpy(path,"C:\\");
@@ -320,5 +323,6 @@ void SetStatus(const STREAMRECORD_PREFERENCES& pref,int n);
 void ResetConnection(const STREAMRECORD_PREFERENCES& pref);
 bool ResetTable(const STREAMRECORD_PREFERENCES& pref);
 bool SetStatus(const STREAMRECORD_PREFERENCES& pref);
+void PushMessage(const STREAMRECORD_PREFERENCES *pref, char msg[]);
 
 #endif

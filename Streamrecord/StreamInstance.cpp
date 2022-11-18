@@ -429,7 +429,7 @@ bool StreamInstance::RecordStream()
 	char program[256];
 	char surl[256];
 	CString string_url;
-	char tstr[1024];
+	char tstr[1024], msg[1024];
 	int writecount = 0;
 
 	//CRecordSession session(PROGRAM_NAME,dwAccessType);
@@ -610,6 +610,11 @@ bool StreamInstance::RecordStream()
 	{
 		pref->schedule_entry[stream_idx].status = 1;
 		SetStatus(*pref, stream_idx);
+		if (pref->pushover)
+		{
+			sprintf(msg, "RECORDING - %s", pref->schedule_entry[stream_idx].program);
+			PushMessage(pref, msg);
+		}
 	}
 
 	time(&osBinaryTime);
@@ -727,6 +732,11 @@ bool StreamInstance::RecordStream()
 							//writecount = 0;
 							pref->schedule_entry[stream_idx].status = 2;
 							SetStatus(*pref, stream_idx);
+							if (pref->pushover)
+							{
+								sprintf(msg, "RECONNECTING - %s", pref->schedule_entry[stream_idx].program);
+								PushMessage(pref, msg);
+							}
 						}
 						//minimize_icon = "yellow.ico";
 						Sleep(1000);
@@ -856,6 +866,11 @@ bool StreamInstance::RecordStream()
 						//writecount = 0;
 						pref->schedule_entry[stream_idx].status = 1;
 						SetStatus(*pref, stream_idx);
+						if (pref->pushover)
+						{
+							sprintf(msg, "RECORDING - %s", pref->schedule_entry[stream_idx].program);
+							PushMessage(pref, msg);
+						}
 					}
 
 					ConvertString(minimize_icon, "red.ico");
@@ -1009,6 +1024,11 @@ bool StreamInstance::RecordStream()
 					status_message = "LOST CONNECTION";
 					pref->schedule_entry[stream_idx].status = 4;
 					SetStatus(*pref, stream_idx);
+					if (pref->pushover)
+					{
+						sprintf(msg, "LOST CONNECTION - %s", pref->schedule_entry[stream_idx].program);
+						PushMessage(pref, msg);
+					}
 				}
 				if (pFile != NULL)
 				{
@@ -1069,6 +1089,12 @@ bool StreamInstance::RecordStream()
 		status_message = "CONNECTION FAILED";
 		pref->schedule_entry[stream_idx].status = 4;
 		SetStatus(*pref, stream_idx);
+		if (pref->pushover)
+		{
+			sprintf(msg, "CONNECTION FAILED - %s", pref->schedule_entry[stream_idx].program);
+			PushMessage(pref, msg);
+		}
+		
 		is_done = true;
 		if (sz != NULL)
 			delete [] sz;
@@ -1228,6 +1254,11 @@ bool StreamInstance::RecordStream()
 		status_message = "DONE RECORDING";
 		pref->schedule_entry[stream_idx].status = 5;
 		SetStatus(*pref, stream_idx);
+		if (pref->pushover)
+		{
+			sprintf(msg, "DONE RECORDING - %s", pref->schedule_entry[stream_idx].program);
+			PushMessage(pref, msg);
+		}
 	}
 	else if (pref->schedule_entry[stream_idx].status == 3)
 	{
