@@ -1,3 +1,14 @@
+//-------------------------------------------
+// David Zientara
+// 12-2-2022
+//
+// StreamInstance.cpp
+//
+// File for the StreamInstance classs
+//
+//---------------------------------------------
+
+
 #include "stdafx.h"
 #include "loadpref.h"
 #include "Database.h"
@@ -11,6 +22,10 @@ bool preferences_lock = false;
 /// = NULL;  
 extern StreamPtr stream_array[MS];
 
+//-------------------------------------
+// pref_struct
+// This is a struct for preferences
+//--------------------------------------
 struct pref_struct
 {
 	STREAMRECORD_PREFERENCES* pref;
@@ -21,6 +36,16 @@ struct pref_struct
 	short retval;
 	sql::ResultSet* res;
 } pref_params;
+
+//------------------------------------
+// CopyPref
+// Function takes as input a pointer
+// to a void, casts this to a 
+// pref_struct object, and assigns
+// parameters
+// PARAMS: pParam (LPVOID)
+// RETURNS: 1
+//-------------------------------------
 
 UINT CopyPref(LPVOID pParam)
 {
@@ -36,7 +61,15 @@ UINT CopyPref(LPVOID pParam)
 	//param_ptr->stream_ptr->RecordStream(); //param_ptr->stream_URL,param_ptr->output_filename);
 	return 1;
 }
-
+//-----------------------------------------------
+// parse_string
+// Function takes an array of chars,
+// appends a backslash (\) to single 
+// quotes (')
+// PARAMS: str (array of chars), len (int)
+// RETURNS: string representing the parsed
+// string
+//------------------------------------------------
 string parse_string(char str[], int len)
 {
 	string retval = "";
@@ -55,7 +88,14 @@ string parse_string(char str[], int len)
 
 //SCHEDULE* sched = new SCHEDULE[MAX_SCHEDULE_ENTRIES];
 //SCHEDULE* sched2 = new SCHEDULE[MAX_SCHEDULE_ENTRIES];
-
+//-----------------------------------------------
+// Database
+// Constructor for the Database class
+// This initializes the API for MySQL and some 
+// variables
+// PARAMS: pref (STREAMRECORD_PREFERENCES object)
+// RETURNS: Nothing
+//-------------------------------------------------
 Database::Database(const STREAMRECORD_PREFERENCES& pref):driver(NULL),con(NULL),stmt(NULL),res(NULL),pinit(false),prev(0)
 {
 	ppref = (STREAMRECORD_PREFERENCES*)&pref;
