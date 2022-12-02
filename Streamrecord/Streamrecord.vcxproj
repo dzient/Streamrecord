@@ -185,6 +185,7 @@
   <ItemGroup>
     <ClInclude Include="ActivationDlg.h" />
     <ClInclude Include="CDatabaseSettingsDlg.h" />
+    <ClInclude Include="CPushoverDlg.h" />
     <ClInclude Include="CRecordSession.h" />
     <ClInclude Include="Database.h" />
     <ClInclude Include="DatabaseSettingsDlg.h" />
@@ -216,6 +217,7 @@
   <ItemGroup>
     <ClCompile Include="ActivationDlg.cpp" />
     <ClCompile Include="CDatabaseSettingsDlg.cpp" />
+    <ClCompile Include="CPushoverDlg.cpp" />
     <ClCompile Include="CRecordSession.cpp" />
     <ClCompile Include="Database.cpp" />
     <ClCompile Include="DatabaseSettingsDlg.cpp" />
@@ -251,7 +253,13 @@
     <None Include="res\Streamrecord.rc2" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="..\..\..\88x31.png" />
     <Image Include="icon.ico" />
+    <Image Include="res\88x31.png" />
+    <Image Include="res\bitmap11.bmp" />
+    <Image Include="res\bitmap12.bmp" />
+    <Image Include="res\bitmap13.bmp" />
+    <Image Include="res\bitmap14.bmp" />
     <Image Include="res\bitmap2.bmp" />
     <Image Include="res\bitmap3.bmp" />
     <Image Include="res\bitmap4.bmp" />
@@ -259,8 +267,15 @@
     <Image Include="res\bitmap6.bmp" />
     <Image Include="res\bitmap7.bmp" />
     <Image Include="res\bitmap8.bmp" />
+    <Image Include="res\bitmap9.bmp" />
+    <Image Include="res\cc.bmp" />
     <Image Include="res\geekicon.bmp" />
     <Image Include="res\icon1.ico" />
+    <Image Include="res\icon10.ico" />
+    <Image Include="res\icon11.ico" />
+    <Image Include="res\icon12.ico" />
+    <Image Include="res\icon13.ico" />
+    <Image Include="res\icon14.ico" />
     <Image Include="res\icon3.ico" />
     <Image Include="res\icon4.ico" />
     <Image Include="res\icon5.ico" />

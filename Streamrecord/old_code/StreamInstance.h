@@ -14,7 +14,7 @@
 
 class CStreamrecordDlg;
 
-#define PROGRAM_NAME "Six Stream Recorder v. 1.36"
+#define PROGRAM_NAME "Six Stream Recorder v. 1.45"
 
 
 

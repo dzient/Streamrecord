@@ -40,6 +40,7 @@
 #include "Database.h"
 #include "Pushover.h"
 #include "CDatabaseSettingsDlg.h"
+#include "CPushoverDlg.h"
 
 
 #ifdef _DEBUG
@@ -83,6 +84,8 @@ static bool status_update = false;
 static bool paused = false;
 static bool playing = false;
 static bool display_dlg = true;
+
+
 
 ////static ZPlay *player;
 ////static TTimeFormat time_format;
@@ -191,6 +194,7 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	afx_msg void OnBnClickedOk();
+	afx_msg void OnStnClickedIcon13();
 };
 
 CAboutDlg::CAboutDlg() : CDialog(CAboutDlg::IDD)
@@ -211,10 +215,13 @@ BEGIN_MESSAGE_MAP(CAboutDlg, CDialog)
 		// No message handlers
 	//}}AFX_MSG_MAP
 	ON_BN_CLICKED(IDOK, OnBnClickedOk)
+	ON_STN_CLICKED(IDI_ICON13, &CAboutDlg::OnStnClickedIcon13)
 END_MESSAGE_MAP()
 char curdir[1024];
 
 
+
+BOOL set_pushover = FALSE;
 /////////////////////////////////////////////////////////////////////////////
 // CStreamrecordDlg dialog
 
@@ -238,6 +245,7 @@ CStreamrecordDlg::CStreamrecordDlg(CWnd* pParent /*=NULL*/)
 	, m_pushover(FALSE)
 {
 	
+
 	_getcwd(curdir, 1023);
 	ConvertString(minimize_icon, "icon.ico");
 
@@ -287,9 +295,10 @@ CStreamrecordDlg::CStreamrecordDlg(CWnd* pParent /*=NULL*/)
 	if (pref.irc.enable_posting && irc != NULL)
 		irc->Start();
 	if (pref.database)
-		ResetStatus(pref);
+		ResetStatus(pref,true);
 	srand(time(NULL));
 
+	
 	
 	
 }
@@ -418,6 +427,7 @@ BEGIN_MESSAGE_MAP(CStreamrecordDlg, CDialog)
 	ON_BN_CLICKED(IDC_BUTTON17, &CStreamrecordDlg::OnBnClickedResetDatabase)
 	ON_BN_CLICKED(IDC_CHECK6, &CStreamrecordDlg::OnBnClickedEnableDatabaseSettings)
 	ON_BN_CLICKED(IDC_CHECK7, &CStreamrecordDlg::OnBnClickedCheck7)
+	ON_BN_CLICKED(IDC_BUTTON18, &CStreamrecordDlg::OnBnClickedButton18)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -470,7 +480,8 @@ BOOL CStreamrecordDlg::OnInitDialog()
 	SetTimer(TIMER_ID_4,30000,0);
 	SetTimer(TIMER_ID_5,pref.DBinterval*1000, 0);
 	SetTimer(TIMER_ID_6, 3600000, 0);
-	//SetTimer(TIMER_ID_7, 600000, 0);
+	SetTimer(TIMER_ID_7, 30000, 0);
+	/////SetTimer(TIMER_ID_8, 3600000, 0);
 	//SetTimer(TIMER_ID_8, 60000, 0);
 	///SetTimer(TIMER_ID_9,300000, 0);
 	
@@ -801,6 +812,7 @@ void CStreamrecordDlg::OnOK()
 		delete dbase;
 	if (push != NULL)
 		delete push;
+	
 	CDialog::OnOK();
 }
 //----------------------------------------------------------
@@ -1108,6 +1120,8 @@ void CStreamrecordDlg::CheckForScheduledEvents()
 	//Iterate through all schedule items;
 	//check to see if anything needs to be recorded
 
+	
+
 
 	for (i = 0; i < pref.num_entries; i++)
 	{
@@ -1120,7 +1134,7 @@ void CStreamrecordDlg::CheckForScheduledEvents()
 		//straddle is true if end hour is less than the start hour:
 		if (pref.schedule_entry[i].end_hr < pref.schedule_entry[i].start_hr)
 			straddle = true;
-
+		
 		
 
 		if (!pref.schedule_entry[i].recorded
@@ -1311,6 +1325,7 @@ void CStreamrecordDlg::CheckForScheduledEvents()
 						infinite_retry = true;
 					//Copy the parameters:
 					CopyString(psound_file, m_psound_file);
+					pref.schedule_entry[i].status = 0;
 					stream_array[j]->CopyParams(pref.schedule_entry[i].
 						stream_URL,output_filename,scast,enc,del_old,
 						pref.schedule_entry[i].encodebr,infinite_retry,ext,
@@ -1348,6 +1363,12 @@ void CStreamrecordDlg::CheckForScheduledEvents()
 			if (stream_array[pref.schedule_entry[i].stream_idx] != NULL)
 				stream_array[pref.schedule_entry[i].stream_idx]->SetTerminate(TRUE);
 			pref.schedule_entry[i].stream_running = FALSE;
+			if (pref.database && !pref.schedule_entry[i].repeated)
+			{
+				///pref.schedule_entry[i].willpurge = 1;
+				strcpy(pref.schedule_entry[i].password, "");
+				SaveDatabase(pref, false, i);
+			}
 		} // Print out information about the currently running streams:
 		else if (pref.schedule_entry[i].stream_idx >= 0
 			&& pref.schedule_entry[i].stream_idx < pref.num_entries
@@ -1355,11 +1376,14 @@ void CStreamrecordDlg::CheckForScheduledEvents()
 			&& stream_array[pref.schedule_entry[i].stream_idx]->Done())
 			|| stream_array[pref.schedule_entry[i].stream_idx] == 0))
 		{
-			
+		
+
 			
 			if (stream_array[pref.schedule_entry[i].stream_idx] != NULL)
 			{
 				CopyString(tempstr, stream_array[pref.schedule_entry[i].stream_idx]->GetStatusMessage());
+				//if ((strncmp(tempstr, "ABORTED",7) != 0)) /// || !pref.schedule_entry[i].monitor_mountpoint)
+				SetStatus(pref, pref.schedule_entry[i].status);
 				if (strcmp(tempstr, "DONE RECORDING") == 0)
 				{
 					CopyString(lr, last_recording);
@@ -1670,24 +1694,32 @@ void CStreamrecordDlg::OnTimer(UINT_PTR nIDEvent)
 	case TIMER_ID_5:
 		// Load the database + copy it to preferences
 		// every N seconds:
-		if (dialog_init && pref.database) // && pref.no_load)
+		if (dialog_init && pref.database && !pref.pruning) // && pref.no_load)
 		{
 			LoadDatabase(pref);
-			CopySchedule(pref);
+			CopySchedule(pref);	
 		}	
 		break;
 	case TIMER_ID_6:
 		// Reset the status every hour
 		// Basically, this resets "Done recording" to "Queued"
 			if (dialog_init && pref.database)
-				ResetStatus(pref);
+				ResetStatus(pref,true);
 			break;
-		case TIMER_ID_7:
-			if (dialog_init && pref.database)
-				ResetStatus(pref);
+	case TIMER_ID_7:
+		if (dialog_init && pref.database)
+			ResetStatus(pref);
+		//if (dialog_init && pref.database)
+		///	PruneSchedule(pref);
+		//	SaveDatabase(pref, true, -1, true);
+			//if (dialog_init && pref.database)
+			//	ResetStatus(pref);
+			//if (!pref.pushover && set_pushover)
+			//	pref.pushover = TRUE;
 		case TIMER_ID_8:
-			if (dialog_init && pref.database)
-				ResetConnection(pref);
+			
+			///if (dialog_init && pref.database)
+			//	ResetConnection(pref);
 			break;
 		case TIMER_ID_9:
 			///if (dialog_init && pref.database)
@@ -1852,10 +1884,14 @@ void CStreamrecordDlg::OnCancel()
 		SavePreferences(PREF_FILE,pref,ignore,add);	
 		KillTimer(TIMER_ID);
 		KillTimer(TIMER_ID_2);
+		WaitForThreads();
+		Sleep(5000);
 		if (dbase != NULL)
 			delete dbase;
 		if (push != NULL)
 			delete push;
+		
+		
 		CDialog::OnCancel();
 	}
 }
@@ -2128,7 +2164,14 @@ void CStreamrecordDlg::OnBnClickedResetDatabase()
 		MessageBoxA(NULL, LPCSTR("Database has been reset."), PROGRAM_NAME, MB_OK);
 	}
 }
-
+//---------------------------------------------------------------
+// OnBnClickedEnableDatabaseSettings()
+// Function is called when the EnableDatabaseSettings checkbox is
+// checked
+// PARAMS: None
+// RETURNS: Nothing; EnableDatabaseSettings checkbox is toggled
+// on or off
+//---------------------------------------------------------------
 
 void CStreamrecordDlg::OnBnClickedEnableDatabaseSettings()
 {
@@ -2136,6 +2179,14 @@ void CStreamrecordDlg::OnBnClickedEnableDatabaseSettings()
 	m_enable_dbox = !m_enable_dbox;
 	pref.enable_dbox = m_enable_dbox;
 }
+//---------------------------------------------------------------
+// OnBnClickedCheck7()
+// Function is called when the Enable Push Notifications checkbox is
+// checked
+// PARAMS: None
+// RETURNS: Nothing;Enable Push Notifications checkbox is checked
+// on or off
+//-----------------------------------------------------------------
 
 
 void CStreamrecordDlg::OnBnClickedCheck7()
@@ -2143,4 +2194,26 @@ void CStreamrecordDlg::OnBnClickedCheck7()
 	// TODO: Add your control notification handler code here
 	m_pushover = !m_pushover;
 	pref.pushover = m_pushover;
+}
+//---------------------------------------------------------------
+// OnBnClickedButton18()
+// Function is called when the Pushover Settings button is 
+// pushed
+// PARAMS: None
+// RETURNS: Nothing; Pushover Settings dialog box is spawned
+//-----------------------------------------------------------------
+
+
+void CStreamrecordDlg::OnBnClickedButton18()
+{
+	// TODO: Add your control notification handler code here
+	CPushoverDlg box(&pref);
+	if (box.DoModal() == IDOK)
+		SavePreferences(PREF_FILE, pref,ignore,add);
+}
+
+
+void CAboutDlg::OnStnClickedIcon13()
+{
+	// TODO: Add your control notification handler code here
 }

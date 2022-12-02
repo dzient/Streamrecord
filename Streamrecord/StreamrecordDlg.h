@@ -142,6 +142,7 @@ public:
 	BOOL m_pushover;
 	afx_msg void OnBnClickedEnableDatabaseSettings();
 	afx_msg void OnBnClickedCheck7();
+	afx_msg void OnBnClickedButton18();
 };
 
 //{{AFX_INSERT_LOCATION}}

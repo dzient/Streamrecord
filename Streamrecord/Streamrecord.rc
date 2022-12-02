@@ -82,27 +82,38 @@ IDI_ICON8               ICON                    "res\\icon8.ico"
 
 IDI_ICON9               ICON                    "icon.ico"
 
+IDI_ICON10              ICON                    "res\\icon10.ico"
+
+IDI_ICON11              ICON                    "res\\icon11.ico"
+
+IDI_ICON12              ICON                    "res\\icon12.ico"
+
+IDI_ICON13              ICON                    "res\\icon13.ico"
+
+IDI_ICON14              ICON                    "res\\icon14.ico"
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
 // Dialog
 //
 
-IDD_ABOUTBOX DIALOGEX 0, 0, 235, 55
-STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "About Simple Stream Recorder"
+IDD_ABOUTBOX DIALOGEX 0, 0, 309, 75
+STYLE DS_SYSMODAL | DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "About Six Stream Recorder"
 FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
-    LTEXT           "Six Stream Recorder v. 1.40",IDC_STATIC,50,7,119,8,SS_NOPREFIX
-    LTEXT           "Copyright (C) 2010-2022 Geek Workshop Coded by David Zientara/Number Six/KC2USE",IDC_STATIC,52,25,119,23
-    DEFPUSHBUTTON   "OK",IDOK,178,7,50,14,WS_GROUP
-    ICON            IDI_ICON2,IDC_STATIC,15,18,20,20
+    LTEXT           "Six Stream Recorder v. 1.45",IDC_STATIC,90,15,119,8,SS_NOPREFIX
+    LTEXT           "Copyright (C) 2010-2022 David Zientara",IDC_STATIC,90,28,142,11
+    DEFPUSHBUTTON   "OK",IDOK,252,7,50,14,WS_GROUP
+    CONTROL         IDB_CCLOGO,IDC_STATIC,"Static",SS_BITMAP,19,14,32,30
+    LTEXT           "This product is licesnsed by a Creative Commons Attribution Non-Commercial ShareAlike 4.0 International license ",IDC_STATIC,90,41,162,27
 END
 
 IDD_STREAMRECORD_DIALOG DIALOGEX 0, 0, 519, 237
 STYLE DS_SETFONT | DS_MODALFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_APPWINDOW
-CAPTION "Six Stream Recorder v. 1.40"
+CAPTION "Six Stream Recorder v. 1.45"
 FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
     EDITTEXT        IDC_EDIT1,75,36,100,14,ES_AUTOHSCROLL
@@ -141,8 +152,8 @@ BEGIN
     CONTROL         "Disable Sounds",IDC_CHECK4,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,275,150,64,10
     PUSHBUTTON      "Browse",IDC_BUTTON11,182,61,70,14
     PUSHBUTTON      "Stop",IDC_BUTTON12,7,174,60,14
-    PUSHBUTTON      "IRC Settings",IDC_BUTTON13,315,206,52,14
-    PUSHBUTTON      "Chat Dialog",IDC_BUTTON14,389,206,52,14
+    PUSHBUTTON      "IRC Settings",IDC_BUTTON13,397,206,52,14
+    PUSHBUTTON      "Chat Dialog",IDC_BUTTON14,460,206,52,14
     CONTROL         "Sync with Database",IDC_CHECK5,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,100,142,75,10
     PUSHBUTTON      "Database Settings",IDC_BUTTON15,182,138,70,14
     PUSHBUTTON      "Sync",IDC_BUTTON16,7,211,60,14
@@ -152,6 +163,7 @@ BEGIN
     CONTROL         "Enable Database Settings dialog on startup",IDC_CHECK6,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,365,150,147,10
     CONTROL         "Enable Push notifications",IDC_CHECK7,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,275,167,101,10
+    PUSHBUTTON      "Pushover Settings",IDC_BUTTON18,282,206,92,14
 END
 
 IDD_DIALOG1 DIALOGEX 0, 0, 242, 322
@@ -389,6 +401,19 @@ BEGIN
     LTEXT           "seconds",IDC_STATIC,299,73,27,8
 END
 
+IDD_DIALOG10 DIALOGEX 0, 0, 309, 99
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Pushover Settings"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,69,78,56,14
+    PUSHBUTTON      "Cancel",IDCANCEL,153,78,50,14
+    LTEXT           "API Key:",IDC_STATIC,33,20,29,10
+    EDITTEXT        IDC_EDIT1,69,16,209,14,ES_AUTOHSCROLL
+    LTEXT           "User:",IDC_STATIC,41,46,19,10
+    EDITTEXT        IDC_EDIT2,69,43,209,13,ES_AUTOHSCROLL
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -439,9 +464,10 @@ BEGIN
     IDD_ABOUTBOX, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 228
+        RIGHTMARGIN, 302
+        VERTGUIDE, 90
         TOPMARGIN, 7
-        BOTTOMMARGIN, 48
+        BOTTOMMARGIN, 68
     END
 
     IDD_STREAMRECORD_DIALOG, DIALOG
@@ -675,6 +701,24 @@ BEGIN
         HORZGUIDE, 81
         HORZGUIDE, 110
     END
+
+    IDD_DIALOG10, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 302
+        VERTGUIDE, 60
+        VERTGUIDE, 69
+        VERTGUIDE, 125
+        VERTGUIDE, 153
+        VERTGUIDE, 237
+        VERTGUIDE, 278
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 92
+        HORZGUIDE, 20
+        HORZGUIDE, 30
+        HORZGUIDE, 43
+        HORZGUIDE, 56
+    END
 END
 #endif    // APSTUDIO_INVOKED
 
@@ -790,6 +834,20 @@ IDB_BITMAP7             BITMAP                  "res\\bitmap7.bmp"
 
 IDB_BITMAP8             BITMAP                  "res\\bitmap8.bmp"
 
+IDB_PNG2                BITMAP                  "res\\cc.bmp"
+
+IDB_BITMAP10            BITMAP                  "P:\\certifications\\truecoders\\streamrecord_nov2022b\\Streamrecord\\Streamrecord\\res\\cc.bmp"
+
+IDB_BITMAP11            BITMAP                  "res\\bitmap11.bmp"
+
+IDB_BITMAP12            BITMAP                  "res\\bitmap12.bmp"
+
+IDB_BITMAP13            BITMAP                  "res\\bitmap13.bmp"
+
+IDB_BITMAP9             BITMAP                  "res\\bitmap9.bmp"
+
+IDB_CCLOGO              BITMAP                  "res\\bitmap14.bmp"
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -815,6 +873,26 @@ IDD_ABOUTBOX AFX_DIALOG_LAYOUT
 BEGIN
     0
 END
+
+IDD_DIALOG10 AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_DIALOG4 AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// PNG
+//
+
+IDB_PNG1                PNG                     "P:\\certifications\\truecoders\\88x31.png"
+
+IDB_PNG2                PNG                     "res\\88x31.png"
 
 
 /////////////////////////////////////////////////////////////////////////////

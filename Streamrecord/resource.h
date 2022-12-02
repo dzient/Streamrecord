@@ -33,6 +33,21 @@
 #define IDD_DIALOG8                     158
 #define IDI_ICON9                       159
 #define IDD_DIALOG9                     162
+#define IDD_DIALOG10                    165
+#define IDI_ICON10                      167
+#define IDI_ICON11                      168
+#define IDB_PNG1                        169
+#define IDB_BITMAP10                    172
+#define IDB_BITMAP11                    173
+#define IDB_BITMAP12                    175
+#define IDB_PNG2                        176
+#define IDB_BITMAP13                    177
+#define IDI_ICON12                      178
+#define IDI_ICON13                      179
+#define IDB_BITMAP9                     180
+#define IDI_ICON14                      181
+#define IDB_BITMAP14                    183
+#define IDB_CCLOGO                      183
 #define IDC_EDIT1                       1000
 #define IDC_BUTTON1                     1001
 #define IDC_EDIT2                       1002
@@ -103,14 +118,15 @@
 #define IDC_CHECK17                     1066
 #define IDC_BUTTON16                    1067
 #define IDC_BUTTON17                    1068
+#define IDC_BUTTON18                    1069
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        165
+#define _APS_NEXT_RESOURCE_VALUE        184
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1069
+#define _APS_NEXT_CONTROL_VALUE         1071
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

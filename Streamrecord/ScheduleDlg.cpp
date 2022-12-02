@@ -791,24 +791,34 @@ void ScheduleDlg::OnDelete()
 {
 	long stream_idx;
 
-	pref_mutex.Lock();
-	stream_idx = ppref->schedule_entry[cur_idx].stream_idx;
-	ppref->schedule_entry[cur_idx].stream_idx = -2;
-	if (ppref->database)
+
+	if (ppref->schedule_entry[cur_idx].thread_ptr != NULL)
 	{
-		DeleteDatabase(ppref->schedule_entry[cur_idx].schedule_id,*ppref);
-		//LoadDatabase(*ppref);
+		MessageBoxA(NULL, LPCSTR("Cannot delete a program currently being recorded."), PROGRAM_NAME,
+			MB_OK | MB_ICONEXCLAMATION);
 	}
-	ConsolidateSchedule(ppref,padd,stream_idx);
-	UpdateData(FALSE);
-	pref_mutex.Unlock();
-	
-	MessageBoxA(NULL,LPCSTR("Current entry deleted."),PROGRAM_NAME,
-		MB_OK|MB_ICONINFORMATION);
-	CopyScheduleInfo(ppref,padd,cur_idx);
-	
-	UpdateData(FALSE);
-	SetUpdated(true);
+	else
+	{
+
+		pref_mutex.Lock();
+		stream_idx = ppref->schedule_entry[cur_idx].stream_idx;
+		ppref->schedule_entry[cur_idx].stream_idx = -2;
+		if (ppref->database)
+		{
+			DeleteDatabase(ppref->schedule_entry[cur_idx].schedule_id, *ppref);
+			//LoadDatabase(*ppref);
+		}
+		ConsolidateSchedule(ppref, padd, stream_idx);
+		UpdateData(FALSE);
+		pref_mutex.Unlock();
+
+		MessageBoxA(NULL, LPCSTR("Current entry deleted."), PROGRAM_NAME,
+			MB_OK | MB_ICONINFORMATION);
+		CopyScheduleInfo(ppref, padd, cur_idx);
+
+		UpdateData(FALSE);
+		SetUpdated(true);
+	}
 }
 
 void ScheduleDlg::UpdateTime(STREAMRECORD_PREFERENCES& pref, int idx)

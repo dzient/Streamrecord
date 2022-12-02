@@ -1,3 +1,12 @@
+//-------------------------------------------
+// David Zientara
+// 10-27-2022
+//
+// StreamInstance.cpp
+//
+// File for the StreamInstance classs
+//
+//---------------------------------------------
 #include "stdafx.h"
 #include "StreamInstance.h"
 
@@ -45,6 +54,12 @@ const TCHAR szHeaders[] =
 const TCHAR szShoutcastHeaders[] =
 	_T("Accept: Icy-Metadata, */*\r\nUser-Agent: Simple Stream Recorder\r\n");
 
+//----------------------------------------------------------------------
+// MatchesExtension
+// Function returns true if the URL and extension match, false otherwise
+// PARAMS: stream_url (array of chars), ignore_ext (array of chars)
+// RETURNS: true if there's a match, false otherwise
+//-----------------------------------------------------------------------
 bool MatchesExtension(const char stream_url[], const char ignore_ext[])
 {
 	char *extptr = (char *)stream_url + strlen(stream_url) - strlen(ignore_ext);
@@ -53,7 +68,12 @@ bool MatchesExtension(const char stream_url[], const char ignore_ext[])
 		return true;
 	return false;
 }
-
+//----------------------------------------------------------------------
+// MatchesWildcard
+// Function returns true if the wildcard is matched, false otherwise
+// PARAMS: stream_url (array of chars), ignore_mp (array of chars)
+// RETURNS: true if there's a match, false otherwise
+//----------------------------------------------------------------------
 bool MatchesWildcard(const char stream_url[], const char ignore_mp[])
 {
 	char ign_copy[1024], *cptr, *substr, *sptr;
@@ -90,13 +110,31 @@ bool MatchesWildcard(const char stream_url[], const char ignore_mp[])
 	return match;
 }
 
-
+//-----------------------------------------------------------------------------
+// StreamInstance
+// Constructor for the StreamInstance class
+// PARAMS: ppref (pointer to STREAMRECORD_PREFERENCES object)
+// RETURNS: Nothing
+// pref, is_done, terminate and ircptr are initialized
+//------------------------------------------------------------------------------
 StreamInstance::StreamInstance(STREAMRECORD_PREFERENCES *ppref):is_done(false),terminate(false),status_message("IDLE")
 {
 	pref = ppref;
 	ircptr = NULL;
 }
- 
+//-----------------------------------------------------------------------------
+// CopyParams
+// Copy the parameters into variables 
+// This guarantees that the parameters are copied into static variables, not
+// dynamic variables that can change
+// PARAMS: stream URL (array of chars), output_file (array of chars),
+// shoutcast (bool), reencode (bool), delete_old (bool), encodebr(short int),
+// file_ext (const char), monitor_mp (bool), index (long int), 
+// play_sound_file (bool), sound_file (const char), player (pointer to void),
+// es (bool), IRC (pointer to IRCBotMFC), update_topic (bool)
+// RETURNS: Nothing
+// Parameters are copied
+//-----------------------------------------------------------------------------
 void StreamInstance::CopyParams(const char stream_URL[], 
 								const char output_file[],
 								bool shoutcast,
@@ -150,7 +188,17 @@ void StreamInstance::CopyParams(const char stream_URL[],
 	ircptr = irc;
 	set_topic = update_topic;
 }
-
+//---------------------------------------------------------------------------------
+// ParseServerStatus
+// Function takes certain parameters, parses status.xsl
+// and returns the number of streams
+// PARAMS: pref (pointer to STREAMRECORD_PREFERENCES object),
+// ignore (pointer IGNORE_LIST object), add (pointer to SCHEDULE_ADD_LIST object),
+// url (array of chars), mp_list (array of array of chars)
+// RETURNS: number of streams, minus the ignored mountpoints,
+// and mountpoints copied nto mp_list
+//
+//-----------------------------------------------------------------------------------
 short StreamInstance::ParseServerStatus(STREAMRECORD_PREFERENCES* pref,
 	IGNORE_LIST* ignore, SCHEDULE_ADD_LIST* add,
 	const char url[], char mp_list[][128],
@@ -380,9 +428,13 @@ short StreamInstance::ParseServerStatus(STREAMRECORD_PREFERENCES* pref,
 
 	return n;
 }
-
-
-
+//---------------------------------------------------------------------------------
+// RecordStream
+// Function records the current stream, reports the status of the stream,
+// and exits when it's done
+// PARAMS: None
+// RETURNS: true is successful, false otherwise
+//----------------------------------------------------------------------------------
 bool StreamInstance::RecordStream() 
 {
 	CString strServerName;
@@ -432,12 +484,15 @@ bool StreamInstance::RecordStream()
 	char tstr[1024], msg[1024];
 	int writecount = 0;
 
+	int stream_index = stream_idx;
+
+
 	//CRecordSession session(PROGRAM_NAME,dwAccessType);
 
 	if (stream_idx >= 0)
 	{
-		strcpy(program,pref->schedule_entry[stream_idx].program);
-		strcpy(surl,pref->schedule_entry[stream_idx].stream_URL);
+		strcpy(program,pref->schedule_entry[stream_index].program);
+		strcpy(surl,pref->schedule_entry[stream_index].stream_URL);
 	}
 	else
 	{
@@ -445,10 +500,10 @@ bool StreamInstance::RecordStream()
 		strcpy(surl,"Unknown URL");
 	}
 
-	if (stream_idx < 0 || pref->schedule_entry[stream_idx].timeout <= 0)
+	if (stream_idx < 0 || pref->schedule_entry[stream_index].timeout <= 0)
 		timeout = RETRY_TIMEOUT;
 	else
-		timeout = pref->schedule_entry[stream_idx].timeout;
+		timeout = pref->schedule_entry[stream_index].timeout;
 
 	session = new CRecordSession(LPCTSTR(PROGRAM_NAME),dwAccessType);
 	
@@ -500,7 +555,7 @@ bool StreamInstance::RecordStream()
 			{
 				if (monitor_mountpoint)
 				{
-					memset(pref->schedule_entry[stream_idx].oldbuf,0,BUFFERSIZE);
+					memset(pref->schedule_entry[stream_index].oldbuf,0,BUFFERSIZE);
 					is_done = true;
 					if (gp != NULL)
 						fclose(gp);
@@ -525,6 +580,8 @@ bool StreamInstance::RecordStream()
 			{
 				connected = true;
 			}
+			if (retry_count++ > 3)
+				terminate = TRUE;
 		}
 		CATCH (CInternetException, pEx)
 		{
@@ -533,7 +590,12 @@ bool StreamInstance::RecordStream()
 
 		END_CATCH
 	}
-
+	retry_count = 0;
+	if (!connected)
+	{
+		pref->schedule_entry[stream_index].stream_idx = -1;
+		return false;
+	}
 	if (monitor_mountpoint)
 	{		
 		num = pFile->Read(sz,CHUNKSIZE);
@@ -606,15 +668,18 @@ bool StreamInstance::RecordStream()
 	}
 
 	status_message = "RECORDING";
-	if (pref->schedule_entry[stream_idx].status != 1)
+	if (pref->schedule_entry[stream_index].status != 1)
 	{
-		pref->schedule_entry[stream_idx].status = 1;
-		SetStatus(*pref, stream_idx);
+		pref->schedule_entry[stream_index].status = 1;
+		sprintf(msg, "RECORDING - %s", pref->schedule_entry[stream_index].program);
+		SetStatus(*pref, stream_index, msg);
+		/*
 		if (pref->pushover)
 		{
-			sprintf(msg, "RECORDING - %s", pref->schedule_entry[stream_idx].program);
+			sprintf(msg, "RECORDING - %s", pref->schedule_entry[stream_index].program);
 			PushMessage(pref, msg);
 		}
+		*/
 	}
 
 	time(&osBinaryTime);
@@ -731,12 +796,15 @@ bool StreamInstance::RecordStream()
 						{
 							//writecount = 0;
 							pref->schedule_entry[stream_idx].status = 2;
-							SetStatus(*pref, stream_idx);
+							sprintf(msg, "RECONNECTING - %s", pref->schedule_entry[stream_idx].program);
+							SetStatus(*pref, stream_idx, msg);
+							/*
 							if (pref->pushover)
 							{
 								sprintf(msg, "RECONNECTING - %s", pref->schedule_entry[stream_idx].program);
 								PushMessage(pref, msg);
 							}
+							*/
 						}
 						//minimize_icon = "yellow.ico";
 						Sleep(1000);
@@ -757,8 +825,8 @@ bool StreamInstance::RecordStream()
 								Sleep(1000);
 							}
 
-							pref->schedule_entry[stream_idx].status = 1;
-							SetStatus(*pref, stream_idx);
+							pref->schedule_entry[stream_index].status = 1;
+							SetStatus(*pref, stream_index);
 						
 							hour = cur_time->GetHour();
 							min = cur_time->GetMinute();
@@ -861,16 +929,19 @@ bool StreamInstance::RecordStream()
 					fail = false;
 					retry_count = 0;
 					status_message = "RECORDING";
-					if (pref->schedule_entry[stream_idx].status != 1)
+					if (pref->schedule_entry[stream_index].status != 1 && pref->schedule_entry[stream_index].thread_ptr != NULL)
 					{
 						//writecount = 0;
-						pref->schedule_entry[stream_idx].status = 1;
-						SetStatus(*pref, stream_idx);
+						pref->schedule_entry[stream_index].status = 1;
+						sprintf(msg, "RECORDING - %s", pref->schedule_entry[stream_index].program);
+						SetStatus(*pref, stream_index,msg);
+						/*
 						if (pref->pushover)
 						{
-							sprintf(msg, "RECORDING - %s", pref->schedule_entry[stream_idx].program);
+							sprintf(msg, "RECORDING - %s", pref->schedule_entry[stream_index].program);
 							PushMessage(pref, msg);
 						}
+						*/
 					}
 
 					ConvertString(minimize_icon, "red.ico");
@@ -1022,13 +1093,16 @@ bool StreamInstance::RecordStream()
 				if (retry_count >= 1000)
 				{
 					status_message = "LOST CONNECTION";
-					pref->schedule_entry[stream_idx].status = 4;
-					SetStatus(*pref, stream_idx);
+					pref->schedule_entry[stream_index].status = 4;
+					sprintf(msg, "LOST CONNECTION - %s", pref->schedule_entry[stream_idx].program);
+					SetStatus(*pref, stream_index,msg);
+					/*
 					if (pref->pushover)
 					{
 						sprintf(msg, "LOST CONNECTION - %s", pref->schedule_entry[stream_idx].program);
 						PushMessage(pref, msg);
 					}
+					*/
 				}
 				if (pFile != NULL)
 				{
@@ -1087,13 +1161,16 @@ bool StreamInstance::RecordStream()
 	if (!inf_retry && retry > RETRY_LIMIT)
 	{
 		status_message = "CONNECTION FAILED";
-		pref->schedule_entry[stream_idx].status = 4;
-		SetStatus(*pref, stream_idx);
+		pref->schedule_entry[stream_index].status = 4;
+		sprintf(msg, "CONNECTION FAILED - %s", pref->schedule_entry[stream_index].program);
+		SetStatus(*pref, stream_index,msg);
+		/*
 		if (pref->pushover)
 		{
-			sprintf(msg, "CONNECTION FAILED - %s", pref->schedule_entry[stream_idx].program);
+			sprintf(msg, "CONNECTION FAILED - %s", pref->schedule_entry[stream_index].program);
 			PushMessage(pref, msg);
 		}
+		*/
 		
 		is_done = true;
 		if (sz != NULL)
@@ -1104,8 +1181,8 @@ bool StreamInstance::RecordStream()
 			delete cur_time;
 		if (the_time != NULL)
 			delete the_time;
-		if (pref->schedule_entry[stream_idx].monitor_mountpoint)
-			pref->schedule_entry[stream_idx].fail_count = 0;
+		if (pref->schedule_entry[stream_index].monitor_mountpoint)
+			pref->schedule_entry[stream_index].fail_count = 0;
 		if (monitor_mountpoint && ircptr != NULL)
 		{
 			sprintf(str,"FINISHED - %s",program);
@@ -1249,21 +1326,24 @@ bool StreamInstance::RecordStream()
 	{
 		ffmpeg_mutex.Unlock();
 	}
-	if (pref->schedule_entry[stream_idx].status <= 2)
+	if (pref->schedule_entry[stream_index].status <= 2 && pref->schedule_entry[stream_index].thread_ptr != NULL)
 	{
 		status_message = "DONE RECORDING";
-		pref->schedule_entry[stream_idx].status = 5;
-		SetStatus(*pref, stream_idx);
+		pref->schedule_entry[stream_index].status = 5;
+		sprintf(msg, "DONE RECORDING - %s", pref->schedule_entry[stream_index].program);
+		SetStatus(*pref, stream_index,msg);
+		/*
 		if (pref->pushover)
 		{
-			sprintf(msg, "DONE RECORDING - %s", pref->schedule_entry[stream_idx].program);
+			sprintf(msg, "DONE RECORDING - %s", pref->schedule_entry[stream_index].program);
 			PushMessage(pref, msg);
 		}
+		*/
 	}
-	else if (pref->schedule_entry[stream_idx].status == 3)
+	else if (pref->schedule_entry[stream_index].status == 3)
 	{
 		status_message = "ABORTED";
-		SetStatus(*pref, stream_idx);
+		SetStatus(*pref, stream_index);
 	}
 
 	if (ircptr != NULL)	
@@ -1275,10 +1355,9 @@ bool StreamInstance::RecordStream()
 		ircptr->SendMessage(str);
 	}
 
-	if (pref->database && !pref->schedule_entry[stream_idx].repeated)
+	if (pref->database && !pref->schedule_entry[stream_index].repeated)
 	{
-		pref->schedule_entry[stream_idx].visible = FALSE;
-		DeleteDatabase(pref->schedule_entry[stream_idx].schedule_id,*pref);
+		strcpy(pref->schedule_entry[stream_idx].password, "");
 	}
 	
 	is_done = true;
@@ -1294,7 +1373,16 @@ bool StreamInstance::RecordStream()
 	
 	return TRUE;
 }
-
+//---------------------------------------------------------------------
+// Connect
+// Function takes a number of paraeters and connects to an HTTP 
+// resource 
+// PARAMS: pServer (pointer to a CHttpConnection object), pFile
+// (pointer to a CHttpFile object), dwHttpRequestFlags (DWORD),
+// szHeaders (array of TCHARs), strObject (CString), strServerName
+// (CString), nPort (INTERNET_PORT)
+// RETURNS: true if successful, false otherwise
+//---------------------------------------------------------------------
 bool StreamInstance::Connect(CHttpConnection *pServer, CHttpFile *&pFile,
 							 CRecordSession& session, DWORD dwHttpRequestFlags, 
 							 DWORD dwServiceType, const TCHAR szHeaders[], 
@@ -1465,6 +1553,12 @@ bool StreamInstance::StreamClose()
 	return true;
 }
 */
+//----------------------------------------------------------------------
+// ParseShoutcast
+// Function parses a Shoutcast stream
+// PARAMS: buffer (array of chars), size (long), mp3_idx (long&)
+// RETURNS: number of streams 
+//----------------------------------------------------------------------
 long StreamInstance::ParseShoutcast(const char buffer[], long size, 
 									long& mp3_idx)
 {
@@ -1496,7 +1590,14 @@ long StreamInstance::ParseShoutcast(const char buffer[], long size,
 
 	return retval;
 }
-
+//--------------------------------------------------------------
+// ParsePlaylist
+// Function reads in a playlist and finds the URL of the
+// server
+// PARAMS: buffer (array of chars), size (long), new_URL
+// (array of chars)
+// RETURNS: true if successful, false otherwise
+//---------------------------------------------------------------
 bool StreamInstance::ParsePlaylist(const char buffer[], long size, 
 								   char new_URL[])
 {

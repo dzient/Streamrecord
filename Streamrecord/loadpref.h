@@ -23,7 +23,7 @@ struct SCHEDULE
 	char program[256];
 	char stream_URL[256];
 	long stream_idx;
-	CWinThread *thread_ptr;
+	
 	BOOL stream_running;
 	BOOL shoutcast;
 	unsigned char rec_date;
@@ -57,11 +57,14 @@ struct SCHEDULE
 	char password[15];
 	char starttime[10];
 	char endtime[10];
+	short parent;
+	char willpurge;
+	CWinThread* thread_ptr;
 	
-	
-	char reserved[12];
+	char reserved[7];
 	SCHEDULE()
 	{
+		
 		status = 0;
 		strcpy(reserved, "");
 		strcpy(endtime, "");
@@ -72,6 +75,8 @@ struct SCHEDULE
 		timeout = 30;
 		encodebr = rec_date = stream_idx = days = start_hr = start_min = (unsigned char)0;
 		delete_old = reencode = shoutcast = stream_running = repeated = recorded = FALSE;
+		parent = -1;
+		willpurge = 0;
 		
 		stream_idx = -1;
 		record_now = 0;
@@ -220,8 +225,12 @@ struct STREAMRECORD_PREFERENCES
 	char datetime[25];
 	char enable_dbox;
 	char pushover;
+
+	char api_key[35];
+	char api_user[35];
+	char pruning;
 	
-	char reserved[255]; 
+	char reserved[184]; 
 
 	SCHEDULE *schedule_entry;
 	
@@ -232,6 +241,9 @@ struct STREAMRECORD_PREFERENCES
 		///completed = FALSE;
 		no_load = false;
 		pushover = 0;
+		pruning = 0;
+		strcpy(api_key, "sample");
+		strcpy(api_user, "sample");
 		strcpy(stream_URL,"sample");
 		strcpy(output_filename,"output.mp3");
 		strcpy(path,"C:\\");
@@ -313,16 +325,19 @@ void CopyString(CString& dest, char source[], unsigned short maxlen=1024);
 void ConvertString(wchar_t conv_str[], char str[], unsigned short maxlen = 1024);
 void ConvertString(char conv_str[], wchar_t str[], unsigned short maxlen = 1024);
 void LoadDatabaseA(STREAMRECORD_PREFERENCES& pref);
-void SaveDatabase(const STREAMRECORD_PREFERENCES& pref, bool thread=false, int n=-1);
+void SaveDatabase(const STREAMRECORD_PREFERENCES& pref, bool thread=false, int n=-1, bool prune=false);
 void DeleteDatabase(const int id, const STREAMRECORD_PREFERENCES& pref);
 void LoadDatabase(STREAMRECORD_PREFERENCES& pref);
 void CopySchedule(STREAMRECORD_PREFERENCES& pref);
 void ResetDatabase(const STREAMRECORD_PREFERENCES& pref);
-void ResetStatus(const STREAMRECORD_PREFERENCES& pref);
-void SetStatus(const STREAMRECORD_PREFERENCES& pref,int n);
+void ResetStatus(const STREAMRECORD_PREFERENCES& pref, bool flip=false);
+void SetStatus(const STREAMRECORD_PREFERENCES& pref,int n, char msg[] = NULL);
 void ResetConnection(const STREAMRECORD_PREFERENCES& pref);
 bool ResetTable(const STREAMRECORD_PREFERENCES& pref);
 bool SetStatus(const STREAMRECORD_PREFERENCES& pref);
 void PushMessage(const STREAMRECORD_PREFERENCES *pref, char msg[]);
+void LoadandCopy(STREAMRECORD_PREFERENCES& pref);
+void PruneSchedule(const STREAMRECORD_PREFERENCES& pref);
+void WaitForThreads();
 
 #endif

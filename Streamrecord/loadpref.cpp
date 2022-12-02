@@ -32,6 +32,8 @@ struct db_struct
 	STREAMRECORD_PREFERENCES* pref;
 	int n;
 	char msg[256];
+	bool prune;
+	bool flip;
 } db_params;
 
 
@@ -43,12 +45,64 @@ struct db_struct
 // struct for parameters
 // RETURNS: 1 if succcessful
 //--------------------------------------
+CMutex LDB_mutex, push_mutex, prune_mutex;
+
+void WaitForThreads()
+{
+	for (int i = 0; i < 20; i++)
+	{
+		LDB_mutex.Lock();
+		LDB_mutex.Unlock();
+	}
+}
+
+UINT LoadandCopyThread(LPVOID db_params)
+{
+	db_struct* db = (db_struct*)db_params;
+	bool rval;
+	LDB_mutex.Lock();
+
+
+	do
+	{
+		rval = db->dbptr->LoadPreferences(*db->pref);
+		if (!rval)
+		{
+			delete dbase;
+			dbase = new Database(*db->pref);
+			db->dbptr = dbase;
+		}
+		while (!db->dbptr->CopySchedule(*db->pref))
+			Sleep(100);
+	} while (!rval);
+
+	LDB_mutex.Unlock();
+	return 1;
+}
+UINT PruneThread(LPVOID db_params)
+{
+	db_struct* db = (db_struct*)db_params;
+	LDB_mutex.Lock();
+	prune_mutex.Lock();
+	db->pref->pruning = 1;
+	while (!db->dbptr->PruneSchedule(*db->pref))
+		Sleep(100);
+	db->pref->pruning = 0;
+	prune_mutex.Unlock();
+	LDB_mutex.Unlock();
+	return 1;
+
+}
 UINT SaveThread(LPVOID db_params)
 {
 	db_struct* db = (db_struct*)db_params;
+	LDB_mutex.Lock();
 
-	while (!db->dbptr->SavePreferences(*db->pref,db->n))
+	db->pref->pruning = db->prune;
+	while (!db->dbptr->SavePreferences(*db->pref, db->n, db->prune))
 		Sleep(100);
+	
+	LDB_mutex.Unlock();
 	return 1;
 }
 //------------------------------------------
@@ -58,27 +112,51 @@ UINT SaveThread(LPVOID db_params)
 // struct for parameters
 // RETURNS: 1 if succcessful
 //--------------------------------------
-CMutex LDB_mutex, push_mutex;
+
+bool status_lock = false;
+bool ssr_init = false;
 
 UINT PushMessageThread(LPVOID db_params)
 {
-	LDB_mutex.Lock();
-	push_mutex.Lock();
-
+	///while (status_lock)
+	///	Sleep(7000);
 	db_struct* db = (db_struct*)db_params;
 
-	db->poptr->PushMessage(db->msg);
+	char msg[256];
+	strcpy(msg, db->msg);
+	///LDB_mutex.Lock();
+	push_mutex.Lock();
+
+
+	//while (status_lock)
+	//	Sleep(5000);
+
+	
+
+	if (!ssr_init) //!db->pref->init)
+	{
+		Sleep(2000);
+		ssr_init = TRUE;
+	}
+	else
+		Sleep(150);
+	db->poptr->PushMessage(msg);
 
 	push_mutex.Unlock();
-	LDB_mutex.Unlock();
+	////LDB_mutex.Unlock();
 	return 1;
 }
 UINT CopyScheduleThread(LPVOID db_params)
 {
+	
 	LDB_mutex.Lock();
+	
 	db_struct* db = (db_struct*)db_params;
+	while (db->pref->pruning)
+		Sleep(100);
 	while (!db->dbptr->CopySchedule(*db->pref))
 		Sleep(100);
+	
 	LDB_mutex.Unlock();
 	return 1;
 }
@@ -94,18 +172,35 @@ UINT LoadDatabaseThread(LPVOID db_params)
 	db_struct* db = (db_struct*)db_params;
 	bool rval;
 	LDB_mutex.Lock();
+	
 	do
 	{
 		rval = db->dbptr->LoadPreferences(*db->pref);
+		/*
 		if (!rval)
 		{
 			delete dbase;
 			dbase = new Database(*db->pref);
 			db->dbptr = dbase;
 		}
+		*/
 	} while (!rval);
+	
+	///rval = db->dbptr->LoadPreferences(*db->pref);
 	LDB_mutex.Unlock();
 		//Sleep(100);
+	return 1;
+}
+UINT DeleteDatabaseThread(LPVOID db_params)
+{
+	bool rval;
+	db_struct* db = (db_struct*)db_params;
+	int n = db->n;
+	LDB_mutex.Lock();
+	do
+	{
+		rval = db->dbptr->DeletePreferences(n);
+	} while (!rval);
 	return 1;
 }
 //------------------------------------------
@@ -119,12 +214,16 @@ UINT LoadDatabaseThread(LPVOID db_params)
 //--------------------------------------
 UINT SetStatusThread(LPVOID db_params)
 {
-	LDB_mutex.Lock();
+	status_lock = true;
 	db_struct* db = (db_struct*)db_params;
+	int n = db->n;
+	LDB_mutex.Lock();
+	
 
-	while (!db->dbptr->SetStatus(*db->pref,db->n))
+	while (!db->dbptr->SetStatus(*db->pref,n))
 		Sleep(1000);
 	LDB_mutex.Unlock();
+	status_lock = false;
 	return 1;
 }
 //----------------------------------------
@@ -160,7 +259,7 @@ UINT ResetStatusThread(LPVOID db_params)
 	LDB_mutex.Lock();
 	db_struct* db = (db_struct*)db_params;
 
-	while (!db->dbptr->ResetStatus(*db->pref))
+	while (!db->dbptr->ResetStatus(*db->pref,db->flip))
 		Sleep(100);
 	LDB_mutex.Unlock();
 	return 1;
@@ -564,7 +663,13 @@ void ConvertString(char conv_str[], wchar_t str[], unsigned short maxlen)
 	else
 		conv_str[maxlen - 1] = NULL;
 }
-
+//----------------------------------------------------------------
+// LoadDatabaseA
+// Function takes a preferences variable and invokes 
+// Database::LoadPreferences
+// PARAMS: pref (STREAMRECORD_PREFERENCES)
+// RETURNS: Nothing; Database::LoadPreferences is invoked
+//----------------------------------------------------------------
 void LoadDatabaseA(STREAMRECORD_PREFERENCES& pref)
 {
 	if (dbase == NULL)
@@ -573,10 +678,18 @@ void LoadDatabaseA(STREAMRECORD_PREFERENCES& pref)
 	
 	dbase->LoadPreferences(pref);
 }
-
-void SaveDatabase(const STREAMRECORD_PREFERENCES& pref, bool thread, int n)
+//----------------------------------------------------------------
+// SaveDatabase
+// Function takes a preferences varaible, a thread variable, and an 
+// integer, and spawns a thread to save the database or invokes
+// Database::SavePreferences 
+// PARAMS: pref (STREAMRECORD_PREFERENCES), thread (bool), n (int)
+// RETURNS: Nothing
+//-----------------------------------------------------------------
+void SaveDatabase(const STREAMRECORD_PREFERENCES& pref, bool thread, int n, bool prune)
 {
-	////if (n != -1) return;
+	if (!pref.database)
+		return;
 	if (dbase == NULL)
 		dbase = new Database(pref);
 	
@@ -585,7 +698,11 @@ void SaveDatabase(const STREAMRECORD_PREFERENCES& pref, bool thread, int n)
 		db_params.dbptr = dbase;
 		db_params.pref = (STREAMRECORD_PREFERENCES *)&pref;
 		db_params.n = n;
-		AfxBeginThread(SaveThread, (LPVOID)&db_params, THREAD_PRIORITY_NORMAL);
+		db_params.prune = prune;
+		if (n == -1)
+			AfxBeginThread(SaveThread, (LPVOID)&db_params, THREAD_PRIORITY_LOWEST);
+		else
+			AfxBeginThread(SaveThread, (LPVOID)&db_params, THREAD_PRIORITY_HIGHEST);
 	}
 	else
 	{
@@ -593,15 +710,41 @@ void SaveDatabase(const STREAMRECORD_PREFERENCES& pref, bool thread, int n)
 		//	Sleep(100);
 	}
 }
+//----------------------------------------------------------------
+// DeleteDatabase
+// Function takes an integer representing the ID and invokes
+// DeletePreferences, a function that deletes an entry from the 
+// database
+// PARAMS: id (const int), pref (STREAMRECORD_PREFERENCES)
+// RETURNS: Nothing; Database::DeletePreferences is invoked
+//-----------------------------------------------------------------
 void DeleteDatabase(const int id, const STREAMRECORD_PREFERENCES& pref)
 {
+	if (!pref.database)
+		return;
 	if (dbase == NULL)
 		dbase = new Database(pref);
+	
+	Sleep(2000);
 	dbase->DeletePreferences(id);
+	Sleep(1000);
+	
+	//db_params.dbptr = dbase;
+	//db_params.n = id;
+	//AfxBeginThread(DeleteDatabaseThread, (LPVOID)&db_params, THREAD_PRIORITY_HIGHEST);
+	
 }
-
+//----------------------------------------------------------------
+// LoadDatabase
+// Function takes a preferences variable and spawns a thread
+// To load the database into a temporary variable
+// PARAMS: pref (STREAMRECORD_PREFRENCES)
+// RETURNS: Nothing; thread is spawned
+//-----------------------------------------------------------------
 void LoadDatabase(STREAMRECORD_PREFERENCES& pref)
 {
+	if (!pref.database)
+		return;
 	if (dbase == NULL)
 	{
 		dbase = new Database(pref);
@@ -615,9 +758,18 @@ void LoadDatabase(STREAMRECORD_PREFERENCES& pref)
 		AfxBeginThread(LoadDatabaseThread, (LPVOID)&db_params, THREAD_PRIORITY_BELOW_NORMAL);
 	}
 }
-
+//----------------------------------------------------------------
+// CopySchedule
+// Function takes a preferences pointer and spawns a thread
+// to copy the data from a temporary variable to the main
+// preferences variable
+// PARAMS: pref (STREAMRECORD_PREFERENCES)
+// RETURNS: Nothing; CopyScheduleThread is invoked
+//-----------------------------------------------------------------
 void CopySchedule(STREAMRECORD_PREFERENCES& pref)
 {
+	if (!pref.database)
+		return;
 	if (dbase == NULL)
 		dbase = new Database(pref);
 	//dbase->CopySchedule(pref);
@@ -627,47 +779,78 @@ void CopySchedule(STREAMRECORD_PREFERENCES& pref)
 
 	AfxBeginThread(CopyScheduleThread, (LPVOID)&db_params, THREAD_PRIORITY_BELOW_NORMAL);
 }
+void LoadandCopy(STREAMRECORD_PREFERENCES& pref)
+{
+	if (dbase == NULL)
+		dbase = new Database(pref);
+	//dbase->CopySchedule(pref);
 
+	db_params.dbptr = dbase;
+	db_params.pref = &pref;
+
+	AfxBeginThread(LoadandCopyThread, (LPVOID)&db_params, THREAD_PRIORITY_BELOW_NORMAL);
+}
+//-------------------------------------------------------------
+// ResetDatabase
+// Function takes a preferences pointer and resets the
+// connection
+// PARAMS: pref (STREAMRECORD_PREFERENCES object)
+// RETURNS: Nothing; connection is reset
+//-------------------------------------------------------------
 void ResetDatabase(const STREAMRECORD_PREFERENCES& pref)
 {
+	if (!pref.database)
+		return;
 	if (dbase == NULL)
 		dbase = new Database(pref);
 	dbase->ResetConnection(pref);
 }
-
-void ResetStatus(const STREAMRECORD_PREFERENCES& pref)
+//-----------------------------------------------------------------
+// ResetStatus
+// Function takes a preferences object and whether or not to flip 
+// everything to "Queued" and spawns a thread to reset Recording 
+void ResetStatus(const STREAMRECORD_PREFERENCES& pref, bool flip)
 {
+	if (!pref.database)
+		return;
 	if (dbase == NULL)
 		dbase = new Database(pref);
-	if (pref.no_load)
-		return;
-	for (int i = 0; i < pref.num_entries; i++)
-		if (pref.schedule_entry[i].thread_ptr == NULL)
-			pref.schedule_entry[i].status = 0;
+	
 	
 	db_params.dbptr = dbase;
 	db_params.pref = (STREAMRECORD_PREFERENCES *)&pref;
+	db_params.flip = flip;
+	
 	
 	AfxBeginThread(ResetStatusThread, (LPVOID)&db_params, THREAD_PRIORITY_HIGHEST);
 	///if (!dbase->ResetStatus(pref))
 	//	Sleep(1000);
 }
-void SetStatus(const STREAMRECORD_PREFERENCES& pref, int n)
+void SetStatus(const STREAMRECORD_PREFERENCES& pref, int n,char msg[])
 {
+	if (!pref.database)
+		return;
 	if (dbase == NULL)
 		dbase = new Database(pref);
 	
 	db_params.dbptr = dbase;
 	db_params.pref = (STREAMRECORD_PREFERENCES *)&pref;
 	db_params.n = n;
+
+	
 	
 	AfxBeginThread(SetStatusThread, (LPVOID)&db_params, THREAD_PRIORITY_HIGHEST);
-//	if (!dbase->SetStatus(pref, n))
-//		Sleep(1000);
+	//if (!dbase->SetStatus(pref, n))
+	//	Sleep(1000);
+
+	if (pref.pushover && msg != NULL)
+		PushMessage(&pref, msg);
 }
 
 void ResetConnection(const STREAMRECORD_PREFERENCES& pref)
 {
+	if (!pref.database)
+		return;
 	if (dbase == NULL)
 		dbase = new Database(pref);
 	db_params.dbptr = dbase;
@@ -682,32 +865,57 @@ void ResetConnection(const STREAMRECORD_PREFERENCES& pref)
 
 bool ResetTable(const STREAMRECORD_PREFERENCES& pref)
 {
+	if (!pref.database)
+		return false;
 	if (dbase == NULL)
 		dbase = new Database(pref);
 	return dbase->ResetTable(pref);
 }
 bool SetStatus(const STREAMRECORD_PREFERENCES& pref)
 {
+	if (!pref.database)
+		return false;
 	if (dbase == NULL)
 		dbase = new Database(pref);
 	db_params.dbptr = dbase;
 	db_params.pref = (STREAMRECORD_PREFERENCES*)&pref;
-	//while (!SetStatus(pref))
-	//	Sleep(1000);
+	////while (!SetStatus(pref))
+	///	Sleep(1000);
+	
 
 	AfxBeginThread(SetStatusOnlyThread, (LPVOID)&db_params, THREAD_PRIORITY_HIGHEST);
 	return true;
 }
 void PushMessage(const STREAMRECORD_PREFERENCES *pref, char msg[])
 {
+	if (!pref->pushover)
+		return;
 	if (push == NULL)
 		push = new Pushover(pref);
 
 	db_params.poptr = push;
+	
 	strcpy(db_params.msg, msg);
 	////db_params.pref = (STREAMRECORD_PREFERENCES*)&pref;
-	AfxBeginThread(PushMessageThread, (LPVOID)&db_params, THREAD_PRIORITY_BELOW_NORMAL);
+	AfxBeginThread(PushMessageThread, (LPVOID)&db_params, THREAD_PRIORITY_LOWEST); // HIGHEST);
 
 
 	//push->PushMessage(msg);
+}
+
+void PruneSchedule(const STREAMRECORD_PREFERENCES& pref)
+{
+	if (!pref.database)
+		return;
+	if (dbase == NULL)
+		dbase = new Database(pref);
+	db_params.dbptr = dbase;
+	db_params.pref = (STREAMRECORD_PREFERENCES*)&pref;
+	STREAMRECORD_PREFERENCES* ppref = (STREAMRECORD_PREFERENCES *)&pref;
+
+	//dbase->PruneSchedule(pref);
+	//AfxBeginThread(PruneThread, (LPVOID)&db_params, THREAD_PRIORITY_LOWEST);
+	
+
+	AfxBeginThread(PruneThread, (LPVOID)&db_params, THREAD_PRIORITY_BELOW_NORMAL);
 }

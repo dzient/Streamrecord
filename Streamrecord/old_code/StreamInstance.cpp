@@ -45,6 +45,12 @@ const TCHAR szHeaders[] =
 const TCHAR szShoutcastHeaders[] =
 	_T("Accept: Icy-Metadata, */*\r\nUser-Agent: Simple Stream Recorder\r\n");
 
+//-----------------------------------------------------------------------
+// MatchesExtension 
+// Function returns true if extension matches the URL; false otherwise
+// PARAMS: stream_url (array of chars), ignore_ext(array of chars)
+// RETURNS: true if extension matches URL; false otherwise
+//-------------------------------------------------------------------------
 bool MatchesExtension(const char stream_url[], const char ignore_ext[])
 {
 	char *extptr = (char *)stream_url + strlen(stream_url) - strlen(ignore_ext);
@@ -53,7 +59,13 @@ bool MatchesExtension(const char stream_url[], const char ignore_ext[])
 		return true;
 	return false;
 }
-
+//----------------------------------------------------------------------------
+// Matches Wildcard
+// Function returns true if the function matches one of several wildcards;
+// false otherwise
+// PARAMS: stream_url (array of chars), ignore_mp (array of chars)
+// RETURNS: true if extension matches wildcard; false otherwise
+//-----------------------------------------------------------------------------
 bool MatchesWildcard(const char stream_url[], const char ignore_mp[])
 {
 	char ign_copy[1024], *cptr, *substr, *sptr;
@@ -89,7 +101,10 @@ bool MatchesWildcard(const char stream_url[], const char ignore_mp[])
 	}
 	return match;
 }
-
+//----------------------------------------------------------------------
+// Stream Instance
+// Constructor for StreamInstance clas
+// PARAMS: ppref (pointer to 
 
 StreamInstance::StreamInstance(STREAMRECORD_PREFERENCES *ppref):is_done(false),terminate(false),status_message("IDLE")
 {

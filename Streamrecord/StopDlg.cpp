@@ -6,6 +6,7 @@
 #include "streamrecord.h"
 #include "StopDlg.h"
 #include ".\stopdlg.h"
+#include "Parse.h"
 
 #define TIMER_ID5	5
 
@@ -127,8 +128,9 @@ void StopDlg::OnLbnDblclkList1()
 {
 	// TODO: Add your control notification handler code here
 	static BOOL busy = FALSE;
-	long i, j;
+	long i, j, k, m;
 	BOOL found = FALSE;
+	char temp[256];
 
 	if (!busy && !update)
 	{
@@ -161,7 +163,53 @@ void StopDlg::OnLbnDblclkList1()
 			ppref->schedule_entry[alist[i]].stream_running = FALSE;
 			ppref->schedule_entry[alist[i]].recorded = TRUE;
 			ppref->schedule_entry[alist[i]].status = 3;
-			////SetStatus(*ppref, alist[i]);
+			found = FALSE;
+			// If it's a mountpoint, we have to do things differently:
+			if (ppref->schedule_entry[alist[i]].monitor_mountpoint)
+			{
+				for (j = 0, k = -1; j < ppref->num_entries && k == -1; j++)
+					if (strncmp(ppref->schedule_entry[alist[i]].stream_URL, ppref->schedule_entry[j].stream_URL, strlen(ppref->schedule_entry[j].stream_URL)) == 0)
+						k = j;
+				if (k != -1)
+				{
+					for (j = 0; j < IGNORE_MP_MAX && !found; j++)
+						if (strcmp(ppref->schedule_entry[k].ignore_mp[j], "") == 0)
+						{
+							strcpy(temp, ppref->schedule_entry[alist[i]].stream_URL);
+							ParseFilename(temp);
+							for (m = strlen(temp); m > 0 && !isspace(temp[m]); m--);
+							temp[m] = '//';
+							strcpy(temp, temp + m);
+							strcpy(ppref->schedule_entry[k].ignore_mp[j], temp);
+							found = TRUE;
+							///SaveDatabase(*ppref, true, k);
+						}
+				}
+				ppref->schedule_entry[alist[i]].parent = k;
+				///DeleteDatabase(alist[i], *ppref);
+				///Sleep(1000);
+				
+			//	ppref->schedule_entry[alist[i]].willpurge = 1;
+				//MessageBoxA(NULL, LPCSTR("Deleting a mountpoint...please wait; this can take up to a minute to complete."), 
+				//	PROGRAM_NAME, MB_SYSTEMMODAL|MB_ICONEXCLAMATION);
+			
+				if (ppref->database)
+				{
+					//strcpy(ppref->schedule_entry[alist[i]].password, "");
+					SaveDatabase(*ppref, false, k); // alist[i]);
+					ppref->schedule_entry[alist[i]].willpurge = 1;
+					///Sleep(5000 + ppref->DBinterval * 1000);
+					//SaveDatabase(*ppref, false, k);
+				}
+				
+			}
+			else
+			{
+				if (ppref->database && !ppref->schedule_entry[i].repeated)
+					ppref->schedule_entry[alist[i]].willpurge = 1;
+				else if (ppref->database)
+					SetStatus(*ppref, alist[i]);
+			}
 		}
 		UpdateData(FALSE);
 		busy = FALSE;

@@ -293,6 +293,7 @@ void AddToSchedule(STREAMRECORD_PREFERENCES *pref,
 	pref->schedule_entry[i].monitor_mountpoint = monitor_mp;
 	pref->schedule_entry[i].limited_retry = limited_retry;
 	pref->schedule_entry[i].monitor_server = FALSE;
+	strcpy(pref->schedule_entry[i].password, pref->DBpassword);
 	j = strlen(url)-1;
 	while (url[j] != '/' && j > 0)
 		j--;

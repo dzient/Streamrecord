@@ -292,129 +292,120 @@ bool Database::LoadPreferencesA(STREAMRECORD_PREFERENCES& pref)
 	db_mutex.Unlock();
 	return false;
 }
-bool Database::SavePreferences(const STREAMRECORD_PREFERENCES& pref,int n)
+bool Database::SavePreferences(const STREAMRECORD_PREFERENCES& pref,int n, bool prune)
 {
 	int k, i = 0;
 	bool rv = false;
 
 	char update[4096], insert[4096];
-	char update2[256];
+	char update2[256], delete_id[256];
 	
 
 	
 
-	db_mutex.Lock();
+	////db_mutex.Lock();
 	
-	ResetConnection(pref);
+	/////ResetConnection(pref);
 	
 
 	if (n == -1)
 	{
 		for (i = 0; i < pref.num_entries; i++)
 		{
-			string daystr = "";
-			string status = "";
-			char dotw[] = "SMTWThFSa";
-			k = 0;
-			for (int j = 0; j < 8; j++)
+			if (prune && strcmp(pref.DBpassword, pref.schedule_entry[i].password) == 0)
 			{
-				if ((pref.schedule_entry[i].days >> j) & 0x1)
-					daystr += dotw[k];
-				k++;
-				if ((pref.schedule_entry[i].days >> j) & 0x1 && (k == 5 || k == 8))
-					daystr += dotw[k++];
-				else if (k == 5 || k == 8)
+				string daystr = "";
+				string status = "";
+				char dotw[] = "SMTWThFSa";
+				k = 0;
+				for (int j = 0; j < 8; j++)
+				{
+					if ((pref.schedule_entry[i].days >> j) & 0x1)
+						daystr += dotw[k];
 					k++;
-			}
-			switch (pref.schedule_entry[i].status)
-			{
-			case 0: status = "Queued";
-				break;
-			case 1: status = "Recording";
-				break;
-			case 2: status = "Reconnecting";
-				break;
-			case 3: status = "Aborted";
-				break;
-			case 4: status = "Lost connection";
-				break;
-			}
+					if ((pref.schedule_entry[i].days >> j) & 0x1 && (k == 5 || k == 8))
+						daystr += dotw[k++];
+					else if (k == 5 || k == 8)
+						k++;
+				}
+				switch (pref.schedule_entry[i].status)
+				{
+				case 0: status = "Queued";
+					break;
+				case 1: status = "Recording";
+					break;
+				case 2: status = "Reconnecting";
+					break;
+				case 3: status = "Aborted";
+					break;
+				case 4: status = "Lost connection";
+					break;
+				}
 
-			strcpy(pref.schedule_entry[i].program, parse_string(pref.schedule_entry[i].program, (int)strlen(pref.schedule_entry[i].program)).c_str());
-			strcpy(pref.schedule_entry[i].stream_URL, parse_string(pref.schedule_entry[i].stream_URL, (int)strlen(pref.schedule_entry[i].stream_URL)).c_str());
-			/*
-			sprintf_s(update, "UPDATE schedule SET ProgramName = '%s', URL = '%s', Day = %d, daystr = '%s',StartTimeHour = %d, StartTimeMin = %d, EndTimeHour=%d, EndTimeMin=%d, Repeating=%d, Shoutcast=%d, Genre=%d, Status='%s', Password='%s' WHERE SCHEDULEID = %d",
-				pref.schedule_entry[i].program, pref.schedule_entry[i].stream_URL, pref.schedule_entry[i].days, daystr.c_str(), pref.schedule_entry[i].start_hr, pref.schedule_entry[i].start_min, pref.schedule_entry[i].end_hr,
-				pref.schedule_entry[i].end_min, pref.schedule_entry[i].repeated, pref.schedule_entry[i].shoutcast, pref.schedule_entry[i].genre, status.c_str(), pref.DBpassword, pref.schedule_entry[i].schedule_id);
+				strcpy(pref.schedule_entry[i].program, parse_string(pref.schedule_entry[i].program, (int)strlen(pref.schedule_entry[i].program)).c_str());
+				strcpy(pref.schedule_entry[i].stream_URL, parse_string(pref.schedule_entry[i].stream_URL, (int)strlen(pref.schedule_entry[i].stream_URL)).c_str());
 
-			sprintf_s(insert, "INSERT INTO schedule (PROGRAMNAME,URL,DAY,DAYSTR,STARTTIMEHOUR,STARTTIMEMIN,ENDTIMEHOUR,ENDTIMEMIN,REPEATING,SHOUTCAST,GENRE,STATUS,PASSWORD) VALUES ('%s','%s',%d,'%s',%d,%d,%d,%d,%d,%d,%d,'Queued','%s')",
-				pref.schedule_entry[i].program, pref.schedule_entry[i].stream_URL, pref.schedule_entry[i].days, daystr.c_str(), pref.schedule_entry[i].start_hr, pref.schedule_entry[i].start_min,
-				pref.schedule_entry[i].end_hr, pref.schedule_entry[i].end_min, pref.schedule_entry[i].repeated, pref.schedule_entry[i].shoutcast, pref.schedule_entry[i].genre,pref.password);
-			
-			sprintf_s(update, "UPDATE schedule SET ProgramName = '%s', URL = '%s', Day = %d, daystr = '%s',StartTimeHour = %d, StartTimeMin = %d, EndTimeHour=%d, EndTimeMin=%d, Repeating=%d, Shoutcast=%d, Genre=%d, Status='%s', Password='%s' WHERE SCHEDULEID = %d",
-				pref.schedule_entry[i].program, pref.schedule_entry[i].stream_URL, pref.schedule_entry[i].days, daystr.c_str(), pref.schedule_entry[i].start_hr, pref.schedule_entry[i].start_min, pref.schedule_entry[i].end_hr,
-				pref.schedule_entry[i].end_min, pref.schedule_entry[i].repeated, pref.schedule_entry[i].shoutcast, pref.schedule_entry[i].genre, status.c_str(), pref.DBpassword, pref.schedule_entry[i].schedule_id);
+				sprintf_s(update, "UPDATE schedule SET ProgramName = '%s', URL = '%s', Day = %d, daystr = '%s',StartTimeHour = %d, StartTimeMin = %d, EndTimeHour=%d, EndTimeMin=%d, Repeating=%d, Shoutcast=%d, Genre=%d, Status='%s', Starttime='%s',Endtime='%s', Password='%s', MonitorMountpoint='%d',MonitorServer='%d',ServerLevel='%d',IgnoreMP1='%s',IgnoreMP2='%s',IgnoreMP3='%s',IgnoreMP4='%s',IgnoreMP5='%s',IgnoreMP6='%s', Timeout='%d', Lastmod='%s' WHERE SCHEDULEID = %d",
+					pref.schedule_entry[i].program, pref.schedule_entry[i].stream_URL, pref.schedule_entry[i].days, daystr.c_str(), pref.schedule_entry[i].start_hr, pref.schedule_entry[i].start_min, pref.schedule_entry[i].end_hr,
+					pref.schedule_entry[i].end_min, pref.schedule_entry[i].repeated, pref.schedule_entry[i].shoutcast, pref.schedule_entry[i].genre, status.c_str(),
+					pref.schedule_entry[i].starttime, pref.schedule_entry[i].endtime, pref.schedule_entry[i].password,
+					pref.schedule_entry[i].monitor_mountpoint, pref.schedule_entry[i].monitor_server, pref.schedule_entry[i].monitor_level,
+					pref.schedule_entry[i].ignore_mp[0], pref.schedule_entry[i].ignore_mp[1], pref.schedule_entry[i].ignore_mp[2],
+					pref.schedule_entry[i].ignore_mp[3], pref.schedule_entry[i].ignore_mp[4], pref.schedule_entry[i].ignore_mp[5],
+					pref.schedule_entry[i].timeout,
+					pref.datetime,
+					pref.schedule_entry[i].schedule_id);
 
-			sprintf_s(insert, "INSERT INTO schedule (PROGRAMNAME,URL,DAY,DAYSTR,STARTTIMEHOUR,STARTTIMEMIN,ENDTIMEHOUR,ENDTIMEMIN,REPEATING,SHOUTCAST,GENRE,STATUS,PASSWORD) VALUES ('%s','%s',%d,'%s',%d,%d,%d,%d,%d,%d,%d,'Queued','%s')",
-				pref.schedule_entry[i].program, pref.schedule_entry[i].stream_URL, pref.schedule_entry[i].days, daystr.c_str(), pref.schedule_entry[i].start_hr, pref.schedule_entry[i].start_min,
-				pref.schedule_entry[i].end_hr, pref.schedule_entry[i].end_min, pref.schedule_entry[i].repeated, pref.schedule_entry[i].shoutcast, pref.schedule_entry[i].genre, pref.DBpassword);
-			*/
-			sprintf_s(update, "UPDATE schedule SET ProgramName = '%s', URL = '%s', Day = %d, daystr = '%s',StartTimeHour = %d, StartTimeMin = %d, EndTimeHour=%d, EndTimeMin=%d, Repeating=%d, Shoutcast=%d, Genre=%d, Status='%s', Starttime='%s',Endtime='%s', Password='%s', MonitorMountpoint='%d',MonitorServer='%d',ServerLevel='%d',IgnoreMP1='%s',IgnoreMP2='%s',IgnoreMP3='%s',IgnoreMP4='%s',IgnoreMP5='%s',IgnoreMP6='%s', Timeout='%d', Lastmod='%s' WHERE SCHEDULEID = %d",
-				pref.schedule_entry[i].program, pref.schedule_entry[i].stream_URL, pref.schedule_entry[i].days, daystr.c_str(), pref.schedule_entry[i].start_hr, pref.schedule_entry[i].start_min, pref.schedule_entry[i].end_hr,
-				pref.schedule_entry[i].end_min, pref.schedule_entry[i].repeated, pref.schedule_entry[i].shoutcast, pref.schedule_entry[i].genre, status.c_str(),
-				pref.schedule_entry[i].starttime, pref.schedule_entry[i].endtime, pref.DBpassword,
-				pref.schedule_entry[i].monitor_mountpoint, pref.schedule_entry[i].monitor_server, pref.schedule_entry[i].monitor_level,
-				pref.schedule_entry[i].ignore_mp[0],pref.schedule_entry[i].ignore_mp[1],pref.schedule_entry[i].ignore_mp[2],
-				pref.schedule_entry[i].ignore_mp[3], pref.schedule_entry[i].ignore_mp[4], pref.schedule_entry[i].ignore_mp[5],
-				pref.schedule_entry[i].timeout,
-				pref.datetime,
-				pref.schedule_entry[i].schedule_id);
-
-			sprintf_s(insert, "INSERT INTO schedule (PROGRAMNAME,URL,DAY,DAYSTR,STARTTIMEHOUR,STARTTIMEMIN,ENDTIMEHOUR,ENDTIMEMIN,REPEATING,SHOUTCAST,GENRE,STATUS,STARTTIME,ENDTIME,PASSWORD,MONITORMOUNTPOINT,MONITORSERVER,SERVERLEVEL, IGNOREMP1,IGNOREMP2,IGNOREMP3,IGNOREMP4,IGNOREMP5,IGNOREMP6,TIMEOUT,LASTMOD) VALUES ('%s','%s',%d,'%s',%d,%d,%d,%d,%d,%d,%d,'%s','%s','%s','%s',%d,%d,%d,'%s','%s','%s','%s','%s','%s',%d,'%s')",
-				pref.schedule_entry[i].program, pref.schedule_entry[i].stream_URL, pref.schedule_entry[i].days, daystr.c_str(), pref.schedule_entry[i].start_hr, pref.schedule_entry[i].start_min,
-				pref.schedule_entry[i].end_hr, pref.schedule_entry[i].end_min, pref.schedule_entry[i].repeated, pref.schedule_entry[i].shoutcast, pref.schedule_entry[i].genre, status.c_str(),
-				pref.schedule_entry[i].starttime, pref.schedule_entry[i].endtime,pref.DBpassword, 
-				pref.schedule_entry[i].monitor_mountpoint,pref.schedule_entry[i].monitor_server,
-				pref.schedule_entry[i].monitor_level,pref.schedule_entry[i].ignore_mp[0],pref.schedule_entry[i].ignore_mp[1],pref.schedule_entry[i].ignore_mp[2],
-				pref.schedule_entry[i].ignore_mp[3], pref.schedule_entry[i].ignore_mp[4], pref.schedule_entry[i].ignore_mp[5],
-				pref.schedule_entry[i].timeout,
-				pref.datetime
+				sprintf_s(insert, "INSERT INTO schedule (PROGRAMNAME,URL,DAY,DAYSTR,STARTTIMEHOUR,STARTTIMEMIN,ENDTIMEHOUR,ENDTIMEMIN,REPEATING,SHOUTCAST,GENRE,STATUS,STARTTIME,ENDTIME,PASSWORD,MONITORMOUNTPOINT,MONITORSERVER,SERVERLEVEL, IGNOREMP1,IGNOREMP2,IGNOREMP3,IGNOREMP4,IGNOREMP5,IGNOREMP6,TIMEOUT,LASTMOD) VALUES ('%s','%s',%d,'%s',%d,%d,%d,%d,%d,%d,%d,'%s','%s','%s','%s',%d,%d,%d,'%s','%s','%s','%s','%s','%s',%d,'%s')",
+					pref.schedule_entry[i].program, pref.schedule_entry[i].stream_URL, pref.schedule_entry[i].days, daystr.c_str(), pref.schedule_entry[i].start_hr, pref.schedule_entry[i].start_min,
+					pref.schedule_entry[i].end_hr, pref.schedule_entry[i].end_min, pref.schedule_entry[i].repeated, pref.schedule_entry[i].shoutcast, pref.schedule_entry[i].genre, status.c_str(),
+					pref.schedule_entry[i].starttime, pref.schedule_entry[i].endtime, pref.schedule_entry[i].password,
+					pref.schedule_entry[i].monitor_mountpoint, pref.schedule_entry[i].monitor_server,
+					pref.schedule_entry[i].monitor_level, pref.schedule_entry[i].ignore_mp[0], pref.schedule_entry[i].ignore_mp[1], pref.schedule_entry[i].ignore_mp[2],
+					pref.schedule_entry[i].ignore_mp[3], pref.schedule_entry[i].ignore_mp[4], pref.schedule_entry[i].ignore_mp[5],
+					pref.schedule_entry[i].timeout,
+					pref.datetime
 				);
 
-			sprintf_s(update2, "UPDATE recstatus SET LASTMOD = '%s' WHERE STATUSID = 1", pref.datetime);
+				sprintf_s(update2, "UPDATE recstatus SET LASTMOD = '%s' WHERE STATUSID = 1", pref.datetime);
 
-			try
-			{
-				if (pref.schedule_entry[i].schedule_id != 0)
+				try
 				{
-					rv = stmt->executeUpdate(update);
+					if (pref.schedule_entry[i].schedule_id != 0)
+					{
+						rv = stmt->executeUpdate(update);
+					}
+					else
+					{
+						rv = stmt->executeUpdate(insert);
+					}
+
 				}
-				else
+				catch (sql::SQLException& e)
 				{
-					rv = stmt->executeUpdate(insert);
+					LogError(e);
+					ResetConnection(pref);
+					////db_mutex.Unlock();
+					return false;
 				}
-				
 			}
-			catch (sql::SQLException& e)
+			else if (prune)
 			{
-				LogError(e);
-				ResetConnection(pref);
-				db_mutex.Unlock();
-				return false;
+				sprintf_s(delete_id, "DELETE FROM schedule WHERE ScheduleID=%d", pref.schedule_entry[i].schedule_id);
+
+				try
+				{
+					stmt->executeUpdate(delete_id);
+				}
+				catch (sql::SQLException& e)
+				{
+					LogError(e);
+					return false;
+				}
 			}
 		}
 
-		try
-		{
-			stmt->executeUpdate(update2);
-		}
-		catch (sql::SQLException& e)
-		{
-			LogError(e);
-			ResetConnection(pref);
-			db_mutex.Unlock();
-			return false;
-		}
+		
 	}
 	else
 	{
@@ -453,7 +444,7 @@ bool Database::SavePreferences(const STREAMRECORD_PREFERENCES& pref,int n)
 		sprintf_s(update, "UPDATE schedule SET ProgramName = '%s', URL = '%s', Day = %d, daystr = '%s',StartTimeHour = %d, StartTimeMin = %d, EndTimeHour=%d, EndTimeMin=%d, Repeating=%d, Shoutcast=%d, Genre=%d, Status='%s', Starttime='%s',Endtime='%s',Password='%s', MonitorMountpoint='%d',MonitorServer='%d',ServerLevel='%d',IgnoreMP1='%s',IgnoreMP2='%s',IgnoreMP3='%s',IgnoreMP4='%s',IgnoreMP5='%s',IgnoreMP6='%s',Timeout=%d, Lastmod='%s' WHERE SCHEDULEID = %d",
 			pref.schedule_entry[n].program, pref.schedule_entry[n].stream_URL, pref.schedule_entry[n].days, daystr.c_str(), pref.schedule_entry[n].start_hr, pref.schedule_entry[n].start_min, pref.schedule_entry[n].end_hr,
 			pref.schedule_entry[n].end_min, pref.schedule_entry[n].repeated, pref.schedule_entry[n].shoutcast, pref.schedule_entry[n].genre, status.c_str(), 
-			pref.schedule_entry[n].starttime,pref.schedule_entry[n].endtime,pref.DBpassword,
+			pref.schedule_entry[n].starttime,pref.schedule_entry[n].endtime, pref.schedule_entry[n].password,
 			pref.schedule_entry[n].monitor_mountpoint, pref.schedule_entry[n].monitor_server,
 			pref.schedule_entry[n].monitor_level, pref.schedule_entry[n].ignore_mp[0], pref.schedule_entry[n].ignore_mp[1], pref.schedule_entry[n].ignore_mp[2],
 			pref.schedule_entry[n].ignore_mp[3], pref.schedule_entry[n].ignore_mp[4], pref.schedule_entry[n].ignore_mp[5],
@@ -464,7 +455,7 @@ bool Database::SavePreferences(const STREAMRECORD_PREFERENCES& pref,int n)
 		sprintf_s(insert, "INSERT INTO schedule (PROGRAMNAME,URL,DAY,DAYSTR,STARTTIMEHOUR,STARTTIMEMIN,ENDTIMEHOUR,ENDTIMEMIN,REPEATING,SHOUTCAST,GENRE,STATUS,STARTTIME,ENDTIME,PASSWORD,MONITORMOUNTPOINT,MONITORSERVER,SERVERLEVEL,IGNOREMP1,IGNOREMP2,IGNOREMP3,IGNOREMP4,IGNOREMP5,IGNOREMP6,TIMEOUT,LASTMOD) VALUES ('%s','%s',%d,'%s',%d,%d,%d,%d,%d,%d,%d,'%s','%s','%s','%s',%d,%d,%d,'%s','%s','%s','%s','%s','%s',%d,'%s')",
 			pref.schedule_entry[n].program, pref.schedule_entry[n].stream_URL, pref.schedule_entry[n].days, daystr.c_str(), pref.schedule_entry[n].start_hr, pref.schedule_entry[n].start_min,
 			pref.schedule_entry[n].end_hr, pref.schedule_entry[n].end_min, pref.schedule_entry[n].repeated, pref.schedule_entry[n].shoutcast, pref.schedule_entry[n].genre, status.c_str(), 
-			pref.schedule_entry[n].starttime,pref.schedule_entry[n].endtime,pref.DBpassword,
+			pref.schedule_entry[n].starttime,pref.schedule_entry[n].endtime,pref.schedule_entry[i].password,
 			pref.schedule_entry[n].monitor_mountpoint, pref.schedule_entry[n].monitor_server,
 			pref.schedule_entry[n].monitor_level, pref.schedule_entry[n].ignore_mp[0], 
 			pref.schedule_entry[n].ignore_mp[1], pref.schedule_entry[n].ignore_mp[2], pref.schedule_entry[n].ignore_mp[3],
@@ -495,7 +486,7 @@ bool Database::SavePreferences(const STREAMRECORD_PREFERENCES& pref,int n)
 		{
 			LogError(e);
 			ResetConnection(pref);
-			db_mutex.Unlock();
+			/////db_mutex.Unlock();
 			return false;
 		}
 
@@ -508,12 +499,12 @@ bool Database::SavePreferences(const STREAMRECORD_PREFERENCES& pref,int n)
 			preferences_lock = false;
 			LogError(e);
 			ResetConnection(pref);
-			db_mutex.Unlock();
+			/////db_mutex.Unlock();
 			return false;
 		}
 
 	}
-	db_mutex.Unlock();
+	///db_mutex.Unlock();
 	
 	return true;
 }
@@ -541,6 +532,7 @@ bool Database::LoadPreferences(STREAMRECORD_PREFERENCES& pref)
 {
 	char update[1024],update2[1024];
 	bool rv = false;
+	char delentry[256];
 	
 
 	if (db_updated)
@@ -596,6 +588,12 @@ bool Database::LoadPreferences(STREAMRECORD_PREFERENCES& pref)
 		for (int i = 0; i < MAX_SCHEDULE_ENTRIES; i++)
 			pref.schedule_entry[i].thread_ptr = NULL;
 	}
+	else
+	{
+		for (i = 0; i < pref.num_entries; i++)
+			willpurge[pref.schedule_entry[i].schedule_id] = pref.schedule_entry[i].willpurge;
+	}
+	i = 0;
 	///memcpy(temp,&pref, sizeof(STREAMRECORD_PREFERENCES));
 	//memcpy(temp->schedule_entry, pref.schedule_entry, sizeof(SCHEDULE) * MAX_SCHEDULE_ENTRIES);
 	
@@ -636,8 +634,25 @@ bool Database::LoadPreferences(STREAMRECORD_PREFERENCES& pref)
 				if (strcmp(url.c_str(), "") == 0)
 					continue;
 				strcpy(temp->schedule_entry[i].password, password.c_str());
+				temp->schedule_entry[i].schedule_id = std::atoi(id.c_str());
+				
+				temp->schedule_entry[i].willpurge = willpurge[temp->schedule_entry[i].schedule_id];
 
-
+				if (temp->schedule_entry[i].willpurge)
+				{
+					sprintf_s(delentry, "DELETE FROM schedule WHERE ScheduleID=%d", temp->schedule_entry[i].schedule_id);
+					stmt->executeUpdate(delentry);
+					temp->schedule_entry[i].willpurge = 0;
+					return false;
+					//continue;
+				}
+			
+				if (strcmp(temp->schedule_entry[i].password, pref.DBpassword) != 0) //|| temp->schedule_entry[i].willpurge)
+				{
+					DeletePreferences(temp->schedule_entry[i].schedule_id);
+					continue;
+				}
+				
 				strcpy(temp->schedule_entry[i].program, name.c_str());
 				strcpy(temp->schedule_entry[i].stream_URL, url.c_str());
 				temp->schedule_entry[i].days = std::atoi(day.c_str());
@@ -649,7 +664,7 @@ bool Database::LoadPreferences(STREAMRECORD_PREFERENCES& pref)
 
 				temp->schedule_entry[i].repeated = std::atoi(repeating.c_str());
 				temp->schedule_entry[i].shoutcast = std::atoi(shoutcast.c_str());
-				temp->schedule_entry[i].schedule_id = std::atoi(id.c_str());
+				
 				temp->schedule_entry[i].genre = std::atoi(genre.c_str());
 				strcpy(temp->schedule_entry[i].starttime, starttime.c_str());
 				strcpy(temp->schedule_entry[i].endtime, endtime.c_str());
@@ -671,7 +686,18 @@ bool Database::LoadPreferences(STREAMRECORD_PREFERENCES& pref)
 				temp->schedule_entry[i].visible = 1;
 				temp->schedule_entry[i].recorded = FALSE;
 
-
+				if (_strcmpi(status.c_str(), "Queued") == 0)
+					temp->schedule_entry[i].status = 0;
+				else if (_strcmpi(status.c_str(), "Recording") == 0)
+					temp->schedule_entry[i].status = 1;
+				else if (_strcmpi(status.c_str(), "Reconnecting") == 0)
+					temp->schedule_entry[i].status = 2;
+				else if (_strcmpi(status.c_str(), "Aborted") == 0)
+					temp->schedule_entry[i].status = 3;
+				else if (_strcmpi(status.c_str(), "Lost connection") == 0)
+					temp->schedule_entry[i].status = 4;
+				else if (_strcmpi(status.c_str(), "Done recording") == 0)
+					temp->schedule_entry[i].status = 5;
 				i++;
 
 				if (i >= MAX_SCHEDULE_ENTRIES)
@@ -745,6 +771,11 @@ bool Database::CopySchedule(STREAMRECORD_PREFERENCES& pref)
 		Sleep(100);
 	if (!db_updated)
 		return false;
+
+	//BOOL* visible = NULL;
+	///char* willpurge = NULL;
+
+	
 	
 	///schedule_mutex.Lock();
 	if (temp != NULL && temp->num_entries > 0)
@@ -756,10 +787,14 @@ bool Database::CopySchedule(STREAMRECORD_PREFERENCES& pref)
 		temp_streams = new long[max_id + 1];
 		temp_recorded = new BOOL[max_id + 1];
 		temp_stream_running = new BOOL[max_id + 1];
+		///willpurge = new char[max_id + 1];
+		//visible = new BOOL[max_id + 1];
 		memset(temp_ptr, 0, sizeof(wptr) * (max_id+1));
 		memset(temp_streams, -1, sizeof(long) * (max_id+1));
 		memset(temp_recorded, 0, sizeof(BOOL) * (max_id + 1));
 		memset(temp_stream_running, 0, sizeof(BOOL) * (max_id + 1));
+		memset(willpurge, 0, sizeof(char) * (max_id + 1));
+		//memset(visible, 0, sizeof(BOOL) * (max_id + 1));
 		if (init)
 		{
 			for (i = 0; i < pref.num_entries; i++)
@@ -768,6 +803,8 @@ bool Database::CopySchedule(STREAMRECORD_PREFERENCES& pref)
 				temp_streams[pref.schedule_entry[i].schedule_id] = pref.schedule_entry[i].stream_idx;
 				temp_recorded[pref.schedule_entry[i].schedule_id] = pref.schedule_entry[i].recorded;
 				temp_stream_running[pref.schedule_entry[i].schedule_id] = pref.schedule_entry[i].stream_running;
+				willpurge[pref.schedule_entry[i].schedule_id] = pref.schedule_entry[i].willpurge;
+				//visible[pref.schedule_entry[i].schedule_id] = pref.schedule_entry[i].visible;
 			}
 		}
 
@@ -796,10 +833,24 @@ bool Database::CopySchedule(STREAMRECORD_PREFERENCES& pref)
 			pref.schedule_entry[i].thread_ptr = temp_ptr[temp->schedule_entry[i].schedule_id];
 			pref.schedule_entry[i].stream_idx = temp_streams[temp->schedule_entry[i].schedule_id];
 			pref.schedule_entry[i].recorded = temp_recorded[temp->schedule_entry[i].schedule_id];
+			pref.schedule_entry[i].willpurge = willpurge[temp->schedule_entry[i].schedule_id];
+
+			/*
+			if (pref.schedule_entry[i].willpurge)
+			{
+				DeletePreferences(pref.schedule_entry[i].schedule_id);
+				pref.schedule_entry[i].willpurge = 0;
+				continue;
+			}
+			*/
+			
+			
 			pref.schedule_entry[i].stream_running = temp_stream_running[temp->schedule_entry[i].schedule_id];
 			pref.schedule_entry[i].timeout = temp->schedule_entry[i].timeout;
 
 			pref.schedule_entry[i].genre = temp->schedule_entry[i].genre; // = std::atoi(genre.c_str());
+
+			pref.schedule_entry[i].status = temp->schedule_entry[i].status;
 
 			pref.schedule_entry[i].monitor_mountpoint = temp->schedule_entry[i].monitor_mountpoint;
 			pref.schedule_entry[i].monitor_server = temp->schedule_entry[i].monitor_server;
@@ -842,7 +893,7 @@ bool Database::CopySchedule(STREAMRECORD_PREFERENCES& pref)
 			
 			///temp->schedule_entry[j].thread_ptr = NULL;
 			//temp->schedule_entry[j].stream_running = FALSE;
-
+			
 		//}
 		}
 		if (temp_ptr != NULL)
@@ -853,6 +904,10 @@ bool Database::CopySchedule(STREAMRECORD_PREFERENCES& pref)
 			delete[] temp_recorded;
 		if (temp_stream_running != NULL)
 			delete[] temp_stream_running;
+		//if (willpurge != NULL)
+		//	delete[] willpurge;
+		//if (visible != NULL)
+		//	delete[] visible;
 
 		////schedule_mutex.Unlock();
 		
@@ -860,6 +915,7 @@ bool Database::CopySchedule(STREAMRECORD_PREFERENCES& pref)
 	
 	db_updated = true;
 	init = true;
+	
 	/////schedule_mutex.Unlock();
 	////pref.num_entries = i; // temp->num_entries;
 	return true;
@@ -916,25 +972,33 @@ bool Database::ResetConnection(const STREAMRECORD_PREFERENCES& pref)
 	return true;
 }
 
-bool Database::ResetStatus(const STREAMRECORD_PREFERENCES& pref)
+bool Database::ResetStatus(const STREAMRECORD_PREFERENCES& pref, bool flip)
 {
 	int i = 0;
 	string status;
 	char update[4096];
 	bool rv;
 
-	while (preferences_lock)
-		Sleep(500);
+	
 	//preferences_lock = true;
 
 	///ResetConnection(pref);
 	
+	
 	for (i = 0; i < pref.num_entries; i++)
 	{
+		if ((flip && pref.schedule_entry[i].status == 5) || (pref.schedule_entry[i].status != 5 && pref.schedule_entry[i].thread_ptr == NULL))
+			pref.schedule_entry[i].status = 0;
+		//else if (!flip && pref.schedule_entry[i].thread_ptr == NULL)
+		//	pref.schedule_entry[i].status = 5;
+
+		if (pref.schedule_entry[i].thread_ptr != NULL && pref.schedule_entry[i].status == 5)
+			pref.schedule_entry[i].status = 1;
+
 		switch (pref.schedule_entry[i].status)
 		{
 		case 0:
-		case 5:
+		//case 5:
 		default:
 			status = "Queued";
 			break;
@@ -946,11 +1010,12 @@ bool Database::ResetStatus(const STREAMRECORD_PREFERENCES& pref)
 			break;
 		case 4: status = "Lost connection";
 			break;
-		//case 5: status = "Done recording";
-		//	break;
+		case 5: status = "Done recording";
+			break;
 		}
-		if (pref.schedule_entry[i].status == 5)
-			pref.schedule_entry[i].status = 0;
+	//	if (pref.schedule_entry[i].status == 5 || pref.schedule_entry[i].thread_ptr == NULL)
+	//		pref.schedule_entry[i].status = 0;
+	
 
 		sprintf_s(update, "UPDATE schedule SET Status='%s' WHERE SCHEDULEID = %d",
 			status.c_str(), pref.schedule_entry[i].schedule_id);
@@ -1042,5 +1107,32 @@ bool Database::SetStatus(const STREAMRECORD_PREFERENCES& pref)
 
 bool Database::Reset()
 {
+	return true;
+}
+bool Database::PruneSchedule(const STREAMRECORD_PREFERENCES& pref)
+{
+	static int i = 0;
+	char delete_id[256];
+
+	//for (i = 0; i < pref.num_entries; i++)
+	{
+		if (strcmp(pref.DBpassword, pref.schedule_entry[i].password) != 0)
+		{
+			sprintf_s(delete_id, "DELETE FROM schedule WHERE ScheduleID=%d", pref.schedule_entry[i].schedule_id);
+
+			try
+			{
+				stmt->executeUpdate(delete_id);
+			}
+			catch (sql::SQLException& e)
+			{
+				LogError(e);
+				return false;
+			}
+		}
+		i++;
+		if (i >= pref.num_entries)
+			i = 0;
+	}
 	return true;
 }

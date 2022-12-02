@@ -102,6 +102,9 @@
     <ClInclude Include="Pushover.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="CPushoverDlg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Streamrecord.cpp">
@@ -176,6 +179,9 @@
     <ClCompile Include="Pushover.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CPushoverDlg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Streamrecord.rc">
@@ -240,6 +246,45 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="res\bitmap8.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\icon10.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\icon11.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\..\..\88x31.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\bitmap9.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\cc.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\bitmap11.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\bitmap12.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\88x31.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\bitmap13.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\icon12.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\icon13.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\icon14.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\bitmap14.bmp">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

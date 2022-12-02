@@ -9,9 +9,9 @@
 class Pushover
 {
 public:
-	Pushover(const STREAMRECORD_PREFERENCES *pref);
+	Pushover(const STREAMRECORD_PREFERENCES *ppref);
 	void PushMessage(char msg[]);
 private:
-	STREAMRECORD_PREFERENCES* ppref;
+	STREAMRECORD_PREFERENCES* pref;
 };
 #endif // !_PUSHOVER_H
