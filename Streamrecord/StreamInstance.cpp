@@ -121,6 +121,13 @@ StreamInstance::StreamInstance(STREAMRECORD_PREFERENCES *ppref):is_done(false),t
 {
 	pref = ppref;
 	ircptr = NULL;
+	start_sound_file[0] = url[0] = file[0] = ext[0] = NULL;
+
+	set_topic = enable_sounds = pl_sound_file = flipzu = scast = encode = del_old = inf_retry = monitor_mountpoint = false;
+	stream_idx = bitrate = 0;
+
+
+	status_message="";
 }
 //-----------------------------------------------------------------------------
 // CopyParams

@@ -216,10 +216,17 @@ void ViewScheduleDlg::FillList()
 	// Iterate through the whole list:
 	for (i = 0; i < ppref->num_entries; i++)
 	{
+		/*
 		if (ppref->schedule_entry[i].stream_idx != -2
 			&& (ppref->schedule_entry[i].days != 0
 			|| ppref->schedule_entry[i].monitor_mountpoint == 1
 			|| ppref->schedule_entry[i].monitor_server == 1)
+			&& ppref->schedule_entry[i].visible)
+		*/
+	    if (ppref->schedule_entry[i].stream_idx != -2
+		    && ppref->schedule_entry[i].days != 0
+			&& ppref->schedule_entry[i].monitor_mountpoint != 1
+			&& ppref->schedule_entry[i].monitor_server != 1
 			&& ppref->schedule_entry[i].visible)
 		{
 			j++;
@@ -335,6 +342,35 @@ void ViewScheduleDlg::FillList()
 
 		}
 	}
+	while (list->next != NULL)
+		list = list->next;
+	for (i = 0; i < ppref->num_entries; i++)
+	{
+		if ((ppref->schedule_entry[i].monitor_mountpoint == 1
+			|| ppref->schedule_entry[i].monitor_server == 1)
+			&& ppref->schedule_entry[i].visible)
+		{
+			if (list->next == NULL)
+			{
+				list->next = new linked_list;
+				list->next->prev = list;
+				list = list->next;
+				list->n = i;
+			}
+			else // Else create a link in the middle of the list:
+			{
+				temp = list->next;
+				list->next = new linked_list;
+				list->next->prev = list;
+				list = list->next;
+				list->n = i;
+				temp->prev = list;
+				list->next = temp;
+			}
+		}
+
+	}
+
 	// Now that we have create the list, go back to 
 	// the beginning:
 	while (list->prev != NULL)

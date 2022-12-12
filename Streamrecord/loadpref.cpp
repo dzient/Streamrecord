@@ -152,8 +152,8 @@ UINT CopyScheduleThread(LPVOID db_params)
 	LDB_mutex.Lock();
 	
 	db_struct* db = (db_struct*)db_params;
-	while (db->pref->pruning)
-		Sleep(100);
+	///while (db->pref->pruning)
+	///	Sleep(100);
 	while (!db->dbptr->CopySchedule(*db->pref))
 		Sleep(100);
 	
@@ -176,6 +176,10 @@ UINT LoadDatabaseThread(LPVOID db_params)
 	do
 	{
 		rval = db->dbptr->LoadPreferences(*db->pref);
+		if (!rval)
+			Sleep(2000);
+
+		return 1;
 		/*
 		if (!rval)
 		{
@@ -221,7 +225,7 @@ UINT SetStatusThread(LPVOID db_params)
 	
 
 	while (!db->dbptr->SetStatus(*db->pref,n))
-		Sleep(1000);
+		Sleep(5000);
 	LDB_mutex.Unlock();
 	status_lock = false;
 	return 1;

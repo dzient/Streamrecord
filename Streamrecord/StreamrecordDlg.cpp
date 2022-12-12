@@ -993,6 +993,7 @@ void CStreamrecordDlg::CheckServer()
 							AddToSchedule(&pref,&add,mp_list[j],TRUE,
 								FALSE,0,0,0,0,pref.schedule_entry[i].timeout);
 							SaveDatabase(pref, false, pref.num_entries - 1);
+							//adDatabase(pref);
 							//ignore.ignore_entry[ignore.num_entries].entry_num = pref.schedule_entry[i].id;
 							//strcpy(ignore.ignore_entry[ignore.num_entries++].mountpoint_URL,mp_list[j]);
 						}
@@ -1007,6 +1008,7 @@ void CStreamrecordDlg::CheckServer()
 								box.GetStartMin(),box.GetEndHour(),box.GetEndMin(),
 								pref.schedule_entry[i].timeout);
 							SaveDatabase(pref,false,pref.num_entries-1);
+							///dDatabase(pref);
 							//ignore.ignore_entry[ignore.num_entries].entry_num = pref.schedule_entry[i].id;
 							//strcpy(ignore.ignore_entry[ignore.num_entries++].mountpoint_URL,mp_list[j]);
 						}
@@ -1137,7 +1139,8 @@ void CStreamrecordDlg::CheckForScheduledEvents()
 		
 		
 
-		if (!pref.schedule_entry[i].recorded
+		if (pref.schedule_entry[i].schedule_id != 0
+			&& !pref.schedule_entry[i].recorded
 			&& !pref.schedule_entry[i].monitor_server
 			&& ((pref.schedule_entry[i].stream_idx < 0
 			&& (((hour == pref.schedule_entry[i].start_hr
@@ -1470,12 +1473,16 @@ void CStreamrecordDlg::CheckForScheduledEvents()
 				if (_strnicmp(ptemp,"IDLE",4) != 0 && pref.schedule_entry[stream_index[j]].thread_ptr != NULL)
 				{
 				
-					m_status += stream_array[pref.schedule_entry[stream_index[j]].stream_idx]->GetStatusMessage();
-					m_status += " - ";
-					m_status += pref.schedule_entry[stream_index[j]].program;
-					CopyString(tempstr, m_status);
-					m_status += "\r\n";
-					is_idle = FALSE;
+					if (stream_array[pref.schedule_entry[stream_index[j]].stream_idx]->GetStatusMessage() != "")
+					{
+						m_status += stream_array[pref.schedule_entry[stream_index[j]].stream_idx]->GetStatusMessage();
+						m_status += " - ";
+						m_status += pref.schedule_entry[stream_index[j]].program;
+						CopyString(tempstr, m_status);
+						m_status += "\r\n";
+						is_idle = FALSE;
+					}
+					
 				
 				}
 				if (!display_dlg)

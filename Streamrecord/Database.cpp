@@ -677,7 +677,7 @@ bool Database::LoadPreferences(STREAMRECORD_PREFERENCES& pref)
 				temp->schedule_entry[i].schedule_id = std::atoi(id.c_str());
 				
 				temp->schedule_entry[i].willpurge = willpurge[temp->schedule_entry[i].schedule_id];
-
+				
 				if (temp->schedule_entry[i].willpurge)
 				{
 					sprintf_s(delentry, "DELETE FROM schedule WHERE ScheduleID=%d", temp->schedule_entry[i].schedule_id);
@@ -686,8 +686,9 @@ bool Database::LoadPreferences(STREAMRECORD_PREFERENCES& pref)
 					return false;
 					//continue;
 				}
+				
 			
-				if (strcmp(temp->schedule_entry[i].password, pref.DBpassword) != 0) //|| temp->schedule_entry[i].willpurge)
+				if (strcmp(temp->schedule_entry[i].password, pref.DBpassword) != 0) // || temp->schedule_entry[i].willpurge)
 				{
 					DeletePreferences(temp->schedule_entry[i].schedule_id);
 					continue;
@@ -839,6 +840,8 @@ bool Database::CopySchedule(STREAMRECORD_PREFERENCES& pref)
 		{
 			for (i = 0; i < pref.num_entries; i++)
 			{
+				//if (pref.schedule_entry[i].schedule_id == 65535)
+				//	pref.schedule_entry[i].schedule_id = temp->schedule_entry[i].schedule_id;
 				temp_ptr[pref.schedule_entry[i].schedule_id] = pref.schedule_entry[i].thread_ptr;
 				temp_streams[pref.schedule_entry[i].schedule_id] = pref.schedule_entry[i].stream_idx;
 				temp_recorded[pref.schedule_entry[i].schedule_id] = pref.schedule_entry[i].recorded;
@@ -869,12 +872,14 @@ bool Database::CopySchedule(STREAMRECORD_PREFERENCES& pref)
 
 			pref.schedule_entry[i].repeated = temp->schedule_entry[i].repeated; // = std::atoi(repeating.c_str());
 			pref.schedule_entry[i].shoutcast = temp->schedule_entry[i].shoutcast; // = std::atoi(shoutcast.c_str());
+			
 			pref.schedule_entry[i].schedule_id = temp->schedule_entry[i].schedule_id; // = std::atoi(id.c_str());
 			pref.schedule_entry[i].thread_ptr = temp_ptr[temp->schedule_entry[i].schedule_id];
 			pref.schedule_entry[i].stream_idx = temp_streams[temp->schedule_entry[i].schedule_id];
 			pref.schedule_entry[i].recorded = temp_recorded[temp->schedule_entry[i].schedule_id];
 			pref.schedule_entry[i].willpurge = willpurge[temp->schedule_entry[i].schedule_id];
-
+			
+			
 			/*
 			if (pref.schedule_entry[i].willpurge)
 			{
