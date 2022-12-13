@@ -168,7 +168,8 @@ void StopDlg::OnLbnDblclkList1()
 			if (ppref->schedule_entry[alist[i]].monitor_mountpoint)
 			{
 				for (j = 0, k = -1; j < ppref->num_entries && k == -1; j++)
-					if (strncmp(ppref->schedule_entry[alist[i]].stream_URL, ppref->schedule_entry[j].stream_URL, strlen(ppref->schedule_entry[j].stream_URL)) == 0)
+					if (strncmp(ppref->schedule_entry[alist[i]].stream_URL, ppref->schedule_entry[j].stream_URL, strlen(ppref->schedule_entry[j].stream_URL)) == 0
+						&& ppref->schedule_entry[j].monitor_server)
 						k = j;
 				if (k != -1)
 				{

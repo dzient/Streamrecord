@@ -9,7 +9,7 @@
 #define	BUFFERSIZE	16
 extern long MAX_SCHEDULE_ENTRIES;
 
-#define IGNORE_MP_MAX	6
+#define IGNORE_MP_MAX	12
 #define IGNORE_LIST_MIN	32
 #define IGNORE_EXT_MAX	6
  

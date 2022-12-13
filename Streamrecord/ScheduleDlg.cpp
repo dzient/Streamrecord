@@ -347,7 +347,10 @@ void ScheduleDlg::OnAdd()
 				for (j = 0; j < IGNORE_MP_MAX; j++)		
 				{
 					ppref->schedule_entry[i].enable_mp_ignore[j] = enable_mp_ignore[j];
-					strncpy(ppref->schedule_entry[i].ignore_mp[j],ignore_mp[j],16);
+					if (j < 6)
+						strncpy(ppref->schedule_entry[i].ignore_mp[j],ignore_mp[j],16);
+					else
+						strncpy(ppref->schedule_entry[i].ignore_mp[j], ignore_mp2[j], 16);
 
 					padd->schedule_entry[i].enable_mp_ignore[j] = enable_mp_ignore2[j];
 					strncpy(padd->schedule_entry[i].ignore_mp[j],ignore_mp2[j],16);

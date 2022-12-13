@@ -492,6 +492,7 @@ bool StreamInstance::RecordStream()
 	int writecount = 0;
 
 	int stream_index = stream_idx;
+	flipzu = false;
 
 
 	//CRecordSession session(PROGRAM_NAME,dwAccessType);

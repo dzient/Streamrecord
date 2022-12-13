@@ -143,7 +143,7 @@ short ParseServerStatus(STREAMRECORD_PREFERENCES *pref,
 				for (j = 0; j < ignore->num_entries; j++)
 					if (strcmp(ignore->ignore_entry[j].mountpoint_URL,temp) == 0)
 						break;
-			if (j == ignore->num_entries)
+			if (j == ignore->num_entries && n < 2)
 				strcpy(mp_list[n++],temp);		
 			delete [] mp[i];
 		}
