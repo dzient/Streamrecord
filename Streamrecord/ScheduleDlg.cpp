@@ -17,7 +17,7 @@ static char THIS_FILE[] = __FILE__;
 #include "MountpointDlg.h"
 
 
-long MAX_SCHEDULE_ENTRIES = 1024;
+long MAX_SCHEDULE_ENTRIES = 2048;
 
 
 #define NUM_BR				7
@@ -718,7 +718,10 @@ void ScheduleDlg::CopyScheduleInfo(const STREAMRECORD_PREFERENCES *pref,
 	for (j = 0; j < IGNORE_MP_MAX; j++)
 	{
 		enable_mp_ignore2[j] = add->schedule_entry[i].enable_mp_ignore[j];
-		strncpy(ignore_mp2[j],add->schedule_entry[i].ignore_mp[j],16);
+		if (j < 6)
+			strncpy(ignore_mp2[j], add->schedule_entry[6+i].ignore_mp[j], 16);
+		else
+			strncpy(ignore_mp2[j],add->schedule_entry[i].ignore_mp[j],16);
 	}
 
 	for (j = 0; j < IGNORE_MP_MAX*2; j++)
@@ -943,7 +946,10 @@ void ScheduleDlg::CommitChanges(BOOL dialog_box)
 		for (j = 0; j < IGNORE_MP_MAX; j++)
 		{
 			ppref->schedule_entry[cur_idx].enable_mp_ignore[j] = enable_mp_ignore[j];
-			strncpy(ppref->schedule_entry[cur_idx].ignore_mp[j],ignore_mp[j],16);
+			if (j < 6)
+				strncpy(ppref->schedule_entry[cur_idx].ignore_mp[j],ignore_mp[j],16);
+			else
+				strncpy(ppref->schedule_entry[cur_idx].ignore_mp[j], ignore_mp2[j-6], 16);
 
 			padd->schedule_entry[cur_idx].enable_mp_ignore[j] = enable_mp_ignore2[j];
 			strncpy(padd->schedule_entry[cur_idx].ignore_mp[j],ignore_mp2[j],16);

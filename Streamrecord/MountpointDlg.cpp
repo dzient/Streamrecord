@@ -189,12 +189,12 @@ MountpointDlg::MountpointDlg(STREAMRECORD_PREFERENCES *pref,
 	m_ignore_mp5 = enable_mp_ignore[4];
 	m_ignore_mp6 = enable_mp_ignore[5];
 
-	m_ignore_mp7 = enable_mp_ignore2[0];
-	m_ignore_mp8 = enable_mp_ignore2[1];
-	m_ignore_mp9 = enable_mp_ignore2[2];
-	m_ignore_mp10 = enable_mp_ignore2[3];
-	m_ignore_mp11 = enable_mp_ignore2[4];
-	m_ignore_mp12 = enable_mp_ignore2[5];
+	m_ignore_mp7 = enable_mp_ignore[0];
+	m_ignore_mp8 = enable_mp_ignore[1];
+	m_ignore_mp9 = enable_mp_ignore[2];
+	m_ignore_mp10 = enable_mp_ignore[3];
+	m_ignore_mp11 = enable_mp_ignore[4];
+	m_ignore_mp12 = enable_mp_ignore[5];
 
 	m_mp1 = ignore_mp[0];
 	m_mp2 = ignore_mp[1];
@@ -203,12 +203,12 @@ MountpointDlg::MountpointDlg(STREAMRECORD_PREFERENCES *pref,
 	m_mp5 = ignore_mp[4];
 	m_mp6 = ignore_mp[5];
 
-	m_mp7 = ignore_mp2[0];
-	m_mp8 = ignore_mp2[1];
-	m_mp9 = ignore_mp2[2];
-	m_mp10 = ignore_mp2[3];
-	m_mp11 = ignore_mp2[4];
-	m_mp12 = ignore_mp2[5];
+	m_mp7 = ignore_mp[6];
+	m_mp8 = ignore_mp[7];
+	m_mp9 = ignore_mp[8];
+	m_mp10 = ignore_mp[9];
+	m_mp11 = ignore_mp[10];
+	m_mp12 = ignore_mp[11];
 
 	for (i = 0; i < 12; i++)
 	{
@@ -713,6 +713,10 @@ void MountpointDlg::CreateMountpointList(char list[], char extlist[])
 		strcpy(extlist,extlist+1);
 	else
 		extlist[0] = NULL;
+
+	i = strlen(list);
+	if (list[i - 2] == ',')
+		list[i - 2] = NULL;
 
 
 }

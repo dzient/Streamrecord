@@ -44,7 +44,7 @@ private:
 	CWinThread** temp_ptr;
 	long* temp_streams;
 	BOOL* temp_recorded, *temp_stream_running;
-	char willpurge[1024];
+	char willpurge[2048];
 	
 
 };

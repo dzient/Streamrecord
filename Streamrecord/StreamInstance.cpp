@@ -652,6 +652,10 @@ bool StreamInstance::RecordStream()
 				delete [] buf;
 			if (cur_time != NULL)
 				delete cur_time;
+			if (pref->database && pref->schedule_entry[stream_index].monitor_mountpoint && !pref->schedule_entry[stream_index].repeated)
+			{
+				pref->schedule_entry[stream_idx].willpurge = 1;
+			}
 			return FALSE;
 		}
 		else
@@ -1143,6 +1147,11 @@ bool StreamInstance::RecordStream()
 			
 		} while (!terminate 
 			&& (!fail || inf_retry || retry++ < RETRY_LIMIT || !tout_exceeded)); 
+	}
+
+	if (pref->database && pref->schedule_entry[stream_index].monitor_mountpoint && !pref->schedule_entry[stream_index].repeated)
+	{
+		pref->schedule_entry[stream_idx].willpurge = 1;
 	}
 
 	if (fp != NULL)

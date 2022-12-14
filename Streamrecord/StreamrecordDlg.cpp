@@ -1356,14 +1356,16 @@ void CStreamrecordDlg::CheckForScheduledEvents()
 				}
 			}
 		} // If the end time has been reached, set terminate flag to TRUE:
-		else if (((hour == pref.schedule_entry[i].end_hr
+		else if ((((hour == pref.schedule_entry[i].end_hr
 			&& min >= pref.schedule_entry[i].end_min))
 			&& pref.schedule_entry[i].stream_idx >= 0
 			&& pref.schedule_entry[i].thread_ptr != NULL
 			&& pref.schedule_entry[i].stream_running
-			&& !pref.schedule_entry[i].monitor_mountpoint)
+			&& !pref.schedule_entry[i].monitor_mountpoint))
+			//|| (pref.schedule_entry[i].monitor_mountpoint && !pref.schedule_entry[i].stream_running 
+			//&& pref.schedule_entry[i].schedule_id != 0))
 		{
-			if (stream_array[pref.schedule_entry[i].stream_idx] != NULL)
+			if (pref.schedule_entry[i].stream_idx != -1 && stream_array[pref.schedule_entry[i].stream_idx] != NULL)
 				stream_array[pref.schedule_entry[i].stream_idx]->SetTerminate(TRUE);
 			pref.schedule_entry[i].stream_running = FALSE;
 			if (pref.database && !pref.schedule_entry[i].repeated)
@@ -1387,7 +1389,7 @@ void CStreamrecordDlg::CheckForScheduledEvents()
 				CopyString(tempstr, stream_array[pref.schedule_entry[i].stream_idx]->GetStatusMessage());
 				//if ((strncmp(tempstr, "ABORTED",7) != 0)) /// || !pref.schedule_entry[i].monitor_mountpoint)
 				SetStatus(pref, pref.schedule_entry[i].status);
-				if (strcmp(tempstr, "DONE RECORDING") == 0)
+				if (strcmp(tempstr, "DONE RECORDING") == 0 && stream_array[pref.schedule_entry[i].stream_idx]->GetStatusMessage() != "")
 				{
 					CopyString(lr, last_recording);
 					if (strcmp(lr," ") == 0)
@@ -1398,7 +1400,8 @@ void CStreamrecordDlg::CheckForScheduledEvents()
 					last_recording += pref.schedule_entry[i].program;
 					last_recording += "\r\n";
 				}
-				if (_strnicmp(tempstr,"IDLE",4) != 0)
+				if (_strnicmp(tempstr,"IDLE",4) != 0 && _stricmp(tempstr, " ") != 0
+					&& _stricmp(tempstr, "") != 0)
 				{
 					m_status += stream_array[pref.schedule_entry[i].stream_idx]->GetStatusMessage();
 					m_status += " - ";
@@ -1461,6 +1464,7 @@ void CStreamrecordDlg::CheckForScheduledEvents()
 			}
 		}
 	}
+
 
 	if (status_info) 
 	{
