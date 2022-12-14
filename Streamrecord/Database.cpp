@@ -628,6 +628,7 @@ bool Database::LoadPreferences(STREAMRECORD_PREFERENCES& pref)
 	
 	
 	long i = 0;
+	long max = 0;
 
 	
 	////pref_struct param_ptr;
@@ -653,6 +654,11 @@ bool Database::LoadPreferences(STREAMRECORD_PREFERENCES& pref)
 	}
 	else
 	{
+		for (i = 0; i < pref.num_entries; i++)
+			if (pref.schedule_entry[i].schedule_id > max)
+				max = pref.schedule_entry[i].schedule_id;
+		willpurge = new char[max + 1];
+		memset(willpurge, 0, max + 1);
 		for (i = 0; i < pref.num_entries; i++)
 			willpurge[pref.schedule_entry[i].schedule_id] = pref.schedule_entry[i].willpurge;
 	}
@@ -706,7 +712,8 @@ bool Database::LoadPreferences(STREAMRECORD_PREFERENCES& pref)
 				strcpy(temp->schedule_entry[i].password, password.c_str());
 				temp->schedule_entry[i].schedule_id = std::atoi(id.c_str());
 				
-				temp->schedule_entry[i].willpurge = willpurge[temp->schedule_entry[i].schedule_id];
+				if (max != 0)
+					temp->schedule_entry[i].willpurge = willpurge[temp->schedule_entry[i].schedule_id];
 				
 				if (temp->schedule_entry[i].willpurge)
 				{
@@ -834,6 +841,7 @@ bool Database::LoadPreferences(STREAMRECORD_PREFERENCES& pref)
 	//memcpy(&pref, temp, sizeof(STREAMRECORD_PREFERENCES));
 	//memcpy(pref.schedule_entry, temp->schedule_entry, sizeof(SCHEDULE) * MAX_SCHEDULE_ENTRIES);
 	///////schedule_mutex.Unlock();
+	delete[] willpurge;
 	
 	db_updated = true;
 	return true;
@@ -870,7 +878,7 @@ bool Database::CopySchedule(STREAMRECORD_PREFERENCES& pref)
 		memset(temp_streams, -1, sizeof(long) * (max_id+1));
 		memset(temp_recorded, 0, sizeof(BOOL) * (max_id + 1));
 		memset(temp_stream_running, 0, sizeof(BOOL) * (max_id + 1));
-		memset(willpurge, 0, sizeof(char) * (max_id + 1));
+		///memset(willpurge, 0, sizeof(char) * (max_id + 1));
 		//memset(visible, 0, sizeof(BOOL) * (max_id + 1));
 		if (init)
 		{
@@ -882,7 +890,7 @@ bool Database::CopySchedule(STREAMRECORD_PREFERENCES& pref)
 				temp_streams[pref.schedule_entry[i].schedule_id] = pref.schedule_entry[i].stream_idx;
 				temp_recorded[pref.schedule_entry[i].schedule_id] = pref.schedule_entry[i].recorded;
 				temp_stream_running[pref.schedule_entry[i].schedule_id] = pref.schedule_entry[i].stream_running;
-				willpurge[pref.schedule_entry[i].schedule_id] = pref.schedule_entry[i].willpurge;
+				////willpurge[pref.schedule_entry[i].schedule_id] = pref.schedule_entry[i].willpurge;
 				//visible[pref.schedule_entry[i].schedule_id] = pref.schedule_entry[i].visible;
 			}
 		}
@@ -913,7 +921,7 @@ bool Database::CopySchedule(STREAMRECORD_PREFERENCES& pref)
 			pref.schedule_entry[i].thread_ptr = temp_ptr[temp->schedule_entry[i].schedule_id];
 			pref.schedule_entry[i].stream_idx = temp_streams[temp->schedule_entry[i].schedule_id];
 			pref.schedule_entry[i].recorded = temp_recorded[temp->schedule_entry[i].schedule_id];
-			pref.schedule_entry[i].willpurge = willpurge[temp->schedule_entry[i].schedule_id];
+			////pref.schedule_entry[i].willpurge = willpurge[temp->schedule_entry[i].schedule_id];
 			
 			
 			/*
