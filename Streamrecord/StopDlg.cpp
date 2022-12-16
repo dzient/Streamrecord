@@ -197,11 +197,11 @@ void StopDlg::OnLbnDblclkList1()
 				if (ppref->database)
 				{
 					//strcpy(ppref->schedule_entry[alist[i]].password, "");
-					Sleep(5000);
+					//Sleep(5000);
 					SaveDatabase(*ppref, false, k); // alist[i]);
 					strcpy(ppref->schedule_entry[alist[i]].password, "");
 					//SaveDatabase(*ppref, false, alist[i]);
-					//Sleep(5000);
+					Sleep(1000);
 					//DeleteDatabase(ppref->schedule_entry[alist[i]].schedule_id, *ppref);
 					ppref->schedule_entry[alist[i]].willpurge = 1;
 					/////LoadDatabase(*ppref);

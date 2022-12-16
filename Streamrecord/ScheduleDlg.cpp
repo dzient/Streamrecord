@@ -1,5 +1,14 @@
 // ScheduleDlg.cpp : implementation file
 //
+//-------------------------------------------
+// David Zientara
+// 12-15-2022
+//
+// ScheduleDlg.cpp
+//
+// File for the ScheduleDlg dialog class
+//
+//---------------------------------------------
 
 #include "stdafx.h"
 #include "streamrecord.h"
@@ -30,7 +39,15 @@ static char bitrate_list[NUM_BR][10] = { "128", "96", "64", "48", "32", "16", "8
 CMutex pref_mutex;
 /////////////////////////////////////////////////////////////////////////////
 // ScheduleDlg dialog
-
+//-----------------------------------------------------
+// ScheduleDlg
+// Constructor for the ScheduleDlg class
+// PARAMS: pref (pointer to STREAMRECORD_PREFERENCES)
+// ignore (pointer to IGNORE_LIST)
+// pParent (pointer to CWnd, parent window)
+// RETURNS: Nothing
+//
+//-----------------------------------------------------
 
 ScheduleDlg::ScheduleDlg(STREAMRECORD_PREFERENCES *pref, long idx, 
 						 IGNORE_LIST *ignore,
@@ -147,9 +164,14 @@ ScheduleDlg::ScheduleDlg(STREAMRECORD_PREFERENCES *pref, long idx,
 	saved = false;
 }
 
-
-
-
+//-----------------------------------------------------
+// DoDataExchange
+// Function sends data from dialog controls to 
+// variables and vice-versa
+// PARAMS: pDX (pointer to CDataExchange object)
+// RETURNS: Nothing; data is exchange between
+// dialog controls and variables
+//------------------------------------------------------
 void ScheduleDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
@@ -230,7 +252,12 @@ END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
 // ScheduleDlg message handlers
-
+//-----------------------------------------------------
+// OnAdd
+// Function adds a schedule entry from the variables
+// PARAMS: None
+// RETURNS: Nothing; a schedule entry is generated
+//------------------------------------------------------
 void ScheduleDlg::OnAdd() 
 {
 	// TODO: Add your control notification handler code here
@@ -369,7 +396,7 @@ void ScheduleDlg::OnAdd()
 				{
 					strncpy(padd->schedule_entry[i].ignore_ext[j],ignore_ext[j],5);
 				}
-				
+				ppref->schedule_entry[i].willpurge = 0;
 				ppref->schedule_entry[i].record_now = FALSE;
 				ppref->schedule_entry[i].recorded = FALSE;
 				ppref->schedule_entry[i].timeout = m_timeout;
@@ -416,7 +443,12 @@ void ScheduleDlg::OnAdd()
 		pref_mutex.Unlock();
 	}
 }
-
+//-----------------------------------------------------
+// OnCheck1
+// Function is called when CHECK1 is checked
+// PARAMS: None
+// RETURNS: Nothing
+//------------------------------------------------------
 void ScheduleDlg::OnCheck1() 
 {
 	// TODO: Add your control notification handler code here
@@ -426,7 +458,12 @@ void ScheduleDlg::OnCheck1()
 	entry_changed = true;
 	
 }
-
+//-----------------------------------------------------
+// OnCheck2
+// Function is called when CHECK2 is checked
+// PARAMS: None
+// RETURNS: Nothing
+//------------------------------------------------------
 void ScheduleDlg::OnCheck2() 
 {
 	// TODO: Add your control notification handler code here
@@ -435,7 +472,12 @@ void ScheduleDlg::OnCheck2()
 	UpdateData(FALSE);
 	entry_changed = true;
 }
-
+//-----------------------------------------------------
+// OnCheck3
+// Function is called when CHECK3 is checked
+// PARAMS: None
+// RETURNS: Nothing
+//------------------------------------------------------
 void ScheduleDlg::OnCheck3() 
 {
 	// TODO: Add your control notification handler code here
@@ -444,7 +486,12 @@ void ScheduleDlg::OnCheck3()
 	UpdateData(FALSE);
 	entry_changed = true;
 }
-
+//-----------------------------------------------------
+// OnCheck4
+// Function is called when CHECK4 is checked
+// PARAMS: None
+// RETURNS: Nothing
+//------------------------------------------------------
 void ScheduleDlg::OnCheck4() 
 {
 	// TODO: Add your control notification handler code here
@@ -453,7 +500,12 @@ void ScheduleDlg::OnCheck4()
 	UpdateData(FALSE);
 	entry_changed = true;
 }
-
+//-----------------------------------------------------
+// OnCheck5
+// Function is called when CHECK5 is checked
+// PARAMS: None
+// RETURNS: Nothing
+//------------------------------------------------------
 void ScheduleDlg::OnCheck5() 
 {
 	// TODO: Add your control notification handler code here
@@ -462,7 +514,12 @@ void ScheduleDlg::OnCheck5()
 	UpdateData(FALSE);
 	entry_changed = true;
 }
-
+//---------------------------------------------------- -
+// OnCheck6
+// Function is called when CHECK6 is checked
+// PARAMS: None
+// RETURNS: Nothing
+//------------------------------------------------------
 void ScheduleDlg::OnCheck6() 
 {
 	// TODO: Add your control notification handler code here
@@ -471,7 +528,12 @@ void ScheduleDlg::OnCheck6()
 	UpdateData(FALSE);
 	entry_changed = true;
 }
-
+//---------------------------------------------------- -
+// OnCheck7
+// Function is called when CHECK7 is checked
+// PARAMS: None
+// RETURNS: Nothing
+//------------------------------------------------------
 void ScheduleDlg::OnCheck7() 
 {
 	// TODO: Add your control notification handler code here
@@ -480,56 +542,99 @@ void ScheduleDlg::OnCheck7()
 	UpdateData(FALSE);
 	entry_changed = true;
 }
-
+//-----------------------------------------------------
+// OnCheck8
+// Function is called when CHECK8 is checked
+// (The Shoutcast checkbox)
+// PARAMS: None
+// RETURNS: Nothing
+//------------------------------------------------------
 void ScheduleDlg::OnCheck8()
 {
 	m_shoutcast = !m_shoutcast;
 	UpdateData(FALSE);
 	entry_changed = true;
 }
-
+//-----------------------------------------------------
+// OnCheck9
+// Function is called when CHECK9 is checked
+// (The re-encode checkbox)
+// PARAMS: None
+// RETURNS: Nothing
+//------------------------------------------------------
 void ScheduleDlg::OnCheck9()
 {
 	m_reencode = !m_reencode;
 	UpdateData(FALSE);
 	entry_changed = true;
 }
-
+//-----------------------------------------------------
+// OnCheck10
+// Function is called when CHECK10 is checked
+// PARAMS: None
+// RETURNS: Nothing
+//------------------------------------------------------
 void ScheduleDlg::OnCheck10()
 {
 	m_delete_old = !m_delete_old;
 	UpdateData(FALSE);
 	entry_changed = true;
 }
-
+//-----------------------------------------------------
+// OnkillfocusEdit1
+// Function is called when EDIT1 loses focus
+// PARAMS: None
+// RETURNS: Nothing
+//-----------------------------------------------------
 void ScheduleDlg::OnKillfocusEdit1() 
 {
 	// TODO: Add your control notification handler code here
 	UpdateData(TRUE);
 	entry_changed = true;
 }
-
+//-----------------------------------------------------
+// OnkillfocusEdit2
+// Function is called when EDIT2 loses focus
+// PARAMS: None
+// RETURNS: Nothing
+//-----------------------------------------------------
 void ScheduleDlg::OnKillfocusEdit2() 
 {
 	// TODO: Add your control notification handler code here
 	UpdateData(TRUE);
 	entry_changed = true;
 }
-
+//-----------------------------------------------------
+// OnkillfocusEdit3
+// Function is called when EDIT3 loses focus
+// PARAMS: None
+// RETURNS: Nothing
+//-----------------------------------------------------
 void ScheduleDlg::OnKillfocusEdit3() 
 {
 	// TODO: Add your control notification handler code here
 	UpdateData(TRUE);
 	entry_changed = true;
 }
-
+//-----------------------------------------------------
+// OnnillfocusEdit4
+// Function is called when EDIT4 loses focus
+// PARAMS: None
+// RETURNS: Nothing
+//-----------------------------------------------------
 void ScheduleDlg::OnKillfocusEdit4() 
 {
 	// TODO: Add your control notification handler code here
 	UpdateData(TRUE);
 	entry_changed = true;
 }
-
+//-----------------------------------------------------
+// OnRadio1
+// Function is called when RADIO1 is clicked
+// (One time vs. repeating)
+// PARAMS: None
+// RETURNS: Nothing
+//-----------------------------------------------------
 void ScheduleDlg::OnRadio1() 
 {
 	// TODO: Add your control notification handler code here
@@ -538,7 +643,12 @@ void ScheduleDlg::OnRadio1()
 	UpdateData(FALSE);
 	entry_changed = true;
 }
-
+//-----------------------------------------------------
+// ONkillfocusEdit2
+// Function is called when RADIO2 is clicked
+// PARAMS: None
+// RETURNS: Nothing
+//-----------------------------------------------------
 void ScheduleDlg::OnRadio2() 
 {
 	// TODO: Add your control notification handler code here
@@ -547,14 +657,25 @@ void ScheduleDlg::OnRadio2()
 	UpdateData(FALSE);
 	entry_changed = true;
 }
-
+//-----------------------------------------------------
+// ONkillfocusEdit5
+// Function is called when EDIT5 is clicked
+// PARAMS: None
+// RETURNS: Nothing
+//-----------------------------------------------------
 void ScheduleDlg::OnKillfocusEdit5() 
 {
 	// TODO: Add your control notification handler code here
 	UpdateData(TRUE);
 	entry_changed = true;
 }
-
+//-----------------------------------------------------
+// OnOK
+// Function is called when OK button is clicked
+// PARAMS: None
+// RETURNS: Nothing; function invokes CommitChanges
+// function
+//-----------------------------------------------------
 void ScheduleDlg::OnOK() 
 {
 	// TODO: Add extra validation here
@@ -565,14 +686,24 @@ void ScheduleDlg::OnOK()
 	///	SavePreferences(PREF_FILE,*ppref,*pignore,*padd);
 	SetDestroyed(true);
 }
-
+//-----------------------------------------------------
+// ONkillfocusEdit6
+// Function is called when EDIT6 is clicked
+// PARAMS: None
+// RETURNS: Nothing
+//-----------------------------------------------------
 void ScheduleDlg::OnKillfocusEdit6() 
 {
 	// TODO: Add your control notification handler code here
 	UpdateData(TRUE);	
 	entry_changed = true;
 }
-
+//-----------------------------------------------------
+// OnOK
+// Function is called when Cancel button is clicked
+// PARAMS: None
+// RETURNS: Nothing; destroyed flag is set
+//-----------------------------------------------------
 void ScheduleDlg::OnCancel() 
 {
 	// TODO: Add extra cleanup here
@@ -580,7 +711,12 @@ void ScheduleDlg::OnCancel()
 	SetDestroyed(true);
 	//CDialog::OnCancel();
 }
-
+//-----------------------------------------------------
+// OnViewSchedule
+// Function has been deprecated 
+// PARAMS: None
+// RETURNS: Nothing
+//-----------------------------------------------------
 void ScheduleDlg::OnViewSchedule() 
 {
 	// TODO: Add your control notification handler code here
@@ -588,7 +724,12 @@ void ScheduleDlg::OnViewSchedule()
 
 	box.DoModal();
 }
-
+//------------------------------------------------------
+// OnBack
+// Function is called when the back button is pressed
+// PARAMS: None
+// RETURNS: Nothing
+//-----------------------------------------------------
 void ScheduleDlg::OnBack() 
 {
 	// TODO: Add your control notification handler code here
@@ -606,7 +747,12 @@ void ScheduleDlg::OnBack()
 		entry_changed = false;
 	}
 }
-
+//------------------------------------------------------
+// OnForward
+// Function is called when the forward button is pressed
+// PARAMS: None
+// RETURNS: Nothing
+//-----------------------------------------------------
 void ScheduleDlg::OnForward() 
 {
 	// TODO: Add your control notification handler code here
@@ -627,7 +773,13 @@ void ScheduleDlg::OnForward()
 	}
 	
 }
-
+//------------------------------------------------------
+// OnBack
+// Function is called when the Edit button is pressed
+// PARAMS: None
+// RETURNS: Nothing; Function invokes CommitChanges
+// function
+//-----------------------------------------------------
 void ScheduleDlg::OnEditCurrent() 
 {
 	// TODO: Add your control notification handler code here	
@@ -639,7 +791,16 @@ void ScheduleDlg::OnEditCurrent()
 	//SaveDatabase(*ppref);
 	///LoadDatabase(*ppref);
 }
-
+//-----------------------------------------------------------
+// CopyScheduleInfo
+// Function copies info from the currently selected 
+// schedule entry into the variables
+// PARAMS: pref (pointer to STREAMRECORD_PREFERENCES)
+// add (pointer to SCHEDULE_ADD_LIST)
+// i (long; refers to the currently selected schedule entry)
+// RETURNS: Nothing; schedule entry is copied into 
+// variables
+// -----------------------------------------------------------
 void ScheduleDlg::CopyScheduleInfo(const STREAMRECORD_PREFERENCES *pref, 
 								   const SCHEDULE_ADD_LIST *add, long i)
 {

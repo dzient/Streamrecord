@@ -993,6 +993,7 @@ void CStreamrecordDlg::CheckServer()
 							AddToSchedule(&pref,&add,mp_list[j],TRUE,
 								FALSE,0,0,0,0,pref.schedule_entry[i].timeout);
 							SaveDatabase(pref, false, pref.num_entries - 1);
+							Sleep(1000);
 							//adDatabase(pref);
 							//ignore.ignore_entry[ignore.num_entries].entry_num = pref.schedule_entry[i].id;
 							//strcpy(ignore.ignore_entry[ignore.num_entries++].mountpoint_URL,mp_list[j]);
@@ -1217,6 +1218,8 @@ void CStreamrecordDlg::CheckForScheduledEvents()
 						return;
 					}
 				}
+				//if (pref.schedule_entry[i].monitor_mountpoint)
+				//	pref.schedule_entry[i].willpurge = 0;
 				pref.schedule_entry[i].rec_date = day_mask;
 				// It's time!
 				if (stream_count < MAX_STREAMS)

@@ -177,7 +177,7 @@ UINT LoadDatabaseThread(LPVOID db_params)
 	{
 		rval = db->dbptr->LoadPreferences(*db->pref);
 		if (!rval)
-			Sleep(1500);
+			Sleep(3000);
 
 		return 1;
 		/*
