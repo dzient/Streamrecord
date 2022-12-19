@@ -1711,7 +1711,8 @@ void CStreamrecordDlg::OnTimer(UINT_PTR nIDEvent)
 		if (dialog_init && pref.database && !pref.pruning) // && pref.no_load)
 		{
 			LoadDatabase(pref);
-			CopySchedule(pref);	
+			if (!pref.pruning)
+				CopySchedule(pref);	
 		}	
 		break;
 	case TIMER_ID_6:

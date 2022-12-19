@@ -662,6 +662,7 @@ bool Database::LoadPreferences(STREAMRECORD_PREFERENCES& pref)
 		for (i = 0; i < pref.num_entries; i++)
 			willpurge[pref.schedule_entry[i].schedule_id] = pref.schedule_entry[i].willpurge;
 	}
+	pref.pruning = 0;
 	i = 0;
 	///memcpy(temp,&pref, sizeof(STREAMRECORD_PREFERENCES));
 	//memcpy(temp->schedule_entry, pref.schedule_entry, sizeof(SCHEDULE) * MAX_SCHEDULE_ENTRIES);
@@ -717,12 +718,14 @@ bool Database::LoadPreferences(STREAMRECORD_PREFERENCES& pref)
 				
 				if (temp->schedule_entry[i].willpurge == 1)
 				{
-					sprintf_s(delentry, "DELETE FROM schedule WHERE ScheduleID=%d", temp->schedule_entry[i].schedule_id);
-					stmt->executeUpdate(delentry);
+					///sprintf_s(delentry, "DELETE FROM schedule WHERE ScheduleID=%d", temp->schedule_entry[i].schedule_id);
+					///stmt->executeUpdate(delentry);
+					DeletePreferences(temp->schedule_entry[i].schedule_id);
 					temp->schedule_entry[i].willpurge = 0;
 					temp->schedule_entry[i].monitor_mountpoint = 0;
 					temp->schedule_entry[i].schedule_id = 0;
 					memset(&temp->schedule_entry[i], 0, sizeof(temp->schedule_entry[i]));
+					pref.pruning = 1;
 					return false;
 					//continue;
 				}
