@@ -4,7 +4,7 @@
 //
 // Streamrecord.Dlg.cpp
 //
-// File for the StreamrecordDlg classs
+// File for the StreamrecordDlg class
 //
 //---------------------------------------------
 
@@ -993,7 +993,7 @@ void CStreamrecordDlg::CheckServer()
 							AddToSchedule(&pref,&add,mp_list[j],TRUE,
 								FALSE,0,0,0,0,pref.schedule_entry[i].timeout);
 							SaveDatabase(pref, false, pref.num_entries - 1);
-							Sleep(1000);
+							Sleep(2000);
 							//adDatabase(pref);
 							//ignore.ignore_entry[ignore.num_entries].entry_num = pref.schedule_entry[i].id;
 							//strcpy(ignore.ignore_entry[ignore.num_entries++].mountpoint_URL,mp_list[j]);

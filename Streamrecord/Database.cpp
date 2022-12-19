@@ -718,10 +718,11 @@ bool Database::LoadPreferences(STREAMRECORD_PREFERENCES& pref)
 				
 				if (temp->schedule_entry[i].willpurge == 1)
 				{
-					///sprintf_s(delentry, "DELETE FROM schedule WHERE ScheduleID=%d", temp->schedule_entry[i].schedule_id);
-					///stmt->executeUpdate(delentry);
+					//sprintf_s(delentry, "DELETE FROM schedule WHERE ScheduleID=%d", temp->schedule_entry[i].schedule_id);
+					//stmt->executeUpdate(delentry);
 					DeletePreferences(temp->schedule_entry[i].schedule_id);
 					temp->schedule_entry[i].willpurge = 0;
+					
 					temp->schedule_entry[i].monitor_mountpoint = 0;
 					temp->schedule_entry[i].schedule_id = 0;
 					memset(&temp->schedule_entry[i], 0, sizeof(temp->schedule_entry[i]));
@@ -731,7 +732,7 @@ bool Database::LoadPreferences(STREAMRECORD_PREFERENCES& pref)
 				}
 				
 			
-				if (strcmp(temp->schedule_entry[i].password, pref.DBpassword) != 0) // || temp->schedule_entry[i].willpurge)
+				if (strcmp(temp->schedule_entry[i].password, pref.DBpassword) != 0) //|| temp->schedule_entry[i].willpurge)
 				{
 					DeletePreferences(temp->schedule_entry[i].schedule_id);
 					continue;

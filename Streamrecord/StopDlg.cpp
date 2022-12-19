@@ -1,5 +1,14 @@
 // StopDlg.cpp : implementation file
 //
+//-------------------------------------------
+// David Zientara
+// 12-19-2022
+//
+// StopDlg.cpp
+//
+// File for the StopDlg class
+//
+//---------------------------------------------
 
 #include "stdafx.h"
 #include "afxmt.h"
@@ -17,6 +26,14 @@ extern CMutex schedule_mutex;
 
 
 IMPLEMENT_DYNAMIC(StopDlg, CDialog)
+//----------------------------------------------------------
+// StopDlg 
+// Constructor for the StopDlg class
+// PARAMS: pref (pointer to STREAMRECORD_PREFERENCES object)
+// stream_araay (array od chars)
+// CWnd (pointer to CWnd; parent window)
+// RETURNS: Nothing; StopDlg object initialized
+//-----------------------------------------------------------
 StopDlg::StopDlg(const STREAMRECORD_PREFERENCES *pref, StreamPtr stream_array[], CWnd* pParent /*=NULL*/)
 	: CDialog(StopDlg::IDD, pParent)
 {
@@ -29,7 +46,12 @@ StopDlg::StopDlg(const STREAMRECORD_PREFERENCES *pref, StreamPtr stream_array[],
 	slistsize = 0;
 	update = FALSE;
 }
-
+//-------------------------------------------------------------
+// ~StopDlg
+// Destructor for the StopDlg class
+// PARAMS: None
+// RETURNS: Nothing; alist + stream_list are deleted
+//-------------------------------------------------------------
 StopDlg::~StopDlg()
 {
 	if (alist != NULL)
@@ -38,7 +60,13 @@ StopDlg::~StopDlg()
 		delete [] stream_list;
 	
 }
-
+//----------------------------------------------------------------
+// DoDataExchange
+// Function copies data from the dialog control to variable and
+// vice-versa
+// PARAMS: pDX (pointer to CDataExchange object)
+// RETURNS: Nothing; data is copied
+//-----------------------------------------------------------------
 void StopDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
@@ -53,7 +81,13 @@ BEGIN_MESSAGE_MAP(StopDlg, CDialog)
 	ON_WM_TIMER()
 	ON_WM_PAINT()
 END_MESSAGE_MAP()
-
+//----------------------------------------------------------------
+// OnTimer
+// Function invokes a timer at specific intervals
+// PARAMS: nIDEvent (UINT_PTR): This is the unique identifier
+// that identifies each timing event
+// RETURNS: Nothing; switch-case statement is called
+//------------------------------------------------------------------
 void StopDlg::OnTimer(UINT_PTR nIDEvent)
 {
 	long i;
@@ -71,14 +105,26 @@ void StopDlg::OnTimer(UINT_PTR nIDEvent)
 
 	CDialog::OnTimer(nIDEvent);
 }
-
+//-----------------------------------------------------------------
+// OnInitDialog
+// Function is invoked when dialog box is initialized
+// PARAMS: None
+// RETURNS: the value of the parent class; SetTimer() is 
+// initialized
+//-----------------------------------------------------------------
 BOOL StopDlg::OnInitDialog()
 {
 	SetTimer(TIMER_ID5,1500,0);
 	
 	return CDialog::OnInitDialog();
 }
-
+//-----------------------------------------------------------------
+// FillList
+// Function fills a dialog control list with the programs
+// currently being recorded
+// PARAMS: pref (pointer to STREAMRECORD_PREFERENCES object)
+// RETURNS: Nothing; list is filled
+//-----------------------------------------------------------------
 void StopDlg::FillList(STREAMRECORD_PREFERENCES *pref)
 {
 	long i, j = 0;
@@ -109,7 +155,12 @@ void StopDlg::FillList(STREAMRECORD_PREFERENCES *pref)
 	update = FALSE;
 	schedule_mutex.Unlock();
 }
-
+//-----------------------------------------------------------------
+// OnPaint
+// Function is invoked when the dialog box needs painting
+// PARAMS: Nothing
+// RETURNS: Nothing; FillList is invoked
+//------------------------------------------------------------------
 
 void StopDlg::OnPaint()
 {
@@ -123,7 +174,14 @@ void StopDlg::OnPaint()
 }
 
 // StopDlg message handlers
-
+//----------------------------------------------------------------------
+// OnLbnDblclkList1
+// Function is invoked when the user double clicks on a list entry
+// PARAMS: Nothing
+// RETURNS: Nothing; if the recording has not been terminated already,
+// it will terminate the recording if the user selects Yes in a 
+// dialog box
+//----------------------------------------------------------------------
 void StopDlg::OnLbnDblclkList1()
 {
 	// TODO: Add your control notification handler code here
@@ -223,7 +281,12 @@ void StopDlg::OnLbnDblclkList1()
 		busy = FALSE;
 	}
 }
-
+//----------------------------------------------------------------------
+// OnBnClickedCancel
+// Function is invoked when the user clicks the Cancel button
+// PARAMS: None
+// RETURNS: Nothing; KillTimer() is invoked
+//-----------------------------------------------------------------------
 void StopDlg::OnBnClickedCancel()
 {
 	// TODO: Add your control notification handler code here
@@ -231,7 +294,12 @@ void StopDlg::OnBnClickedCancel()
 	KillTimer(TIMER_ID5);
 	//OnCancel();
 }
-
+//----------------------------------------------------------------------
+// OnBnClickedOk
+// Function is invoked when Ok button is clicked
+// PARAMS: None
+// RETURNS: Nothing; KillTimer() is invoked
+//----------------------------------------------------------------------
 void StopDlg::OnBnClickedOk()
 {
 	// TODO: Add your control notification handler code here

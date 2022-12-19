@@ -106,7 +106,7 @@ BEGIN
     LTEXT           "Six Stream Recorder v. 1.45",IDC_STATIC,90,15,119,8,SS_NOPREFIX
     LTEXT           "Copyright (C) 2010-2022 David Zientara",IDC_STATIC,90,28,142,11
     DEFPUSHBUTTON   "OK",IDOK,252,7,50,14,WS_GROUP
-    CONTROL         IDB_CCLOGO,IDC_STATIC,"Static",SS_BITMAP,19,14,32,30
+    CONTROL         IDB_BITMAP14,IDC_STATIC,"Static",SS_BITMAP,19,14,32,30
     LTEXT           "This product is licesnsed by a Creative Commons Attribution Non-Commercial ShareAlike 4.0 International license ",IDC_STATIC,90,41,162,27
 END
 
@@ -880,6 +880,11 @@ BEGIN
 END
 
 IDD_DIALOG4 AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_DIALOG6 AFX_DIALOG_LAYOUT
 BEGIN
     0
 END

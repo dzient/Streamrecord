@@ -177,21 +177,20 @@ UINT LoadDatabaseThread(LPVOID db_params)
 	{
 		rval = db->dbptr->LoadPreferences(*db->pref);
 		if (!rval)
-			Sleep(2000);
-
-		///////return 1;
-		/*
+			Sleep(1000);		
+	
 		if (!rval)
 		{
 			delete dbase;
 			dbase = new Database(*db->pref);
 			db->dbptr = dbase;
 		}
-		*/
+	
 	} while (!rval);
 	
-	///rval = db->dbptr->LoadPreferences(*db->pref);
 	LDB_mutex.Unlock();
+	///rval = db->dbptr->LoadPreferences(*db->pref);
+	
 		//Sleep(100);
 	return 1;
 }

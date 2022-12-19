@@ -1,3 +1,14 @@
+//-------------------------------------------
+// David Zientara
+// 12-19-2022
+//
+// Pushover.cpp
+//
+// File for the Pushover class
+//
+//---------------------------------------------
+
+
 #include "stdafx.h"
 #include "loadpref.h"
 #include "Pushover.h"
@@ -10,11 +21,25 @@
 #define TOKEN	"asbbq4d9ffc2pkut8moi3ati3qoga4"
 #define USER	"uRNgDtixLQdTSaXe5tWgFPeMKH2K97"
 
+
+//--------------------------------------------------------
+// Pushover 
+// Constructor for the Pushover class
+// PARAMS: pref (pointer to STREAMRECORD_PREFERENCES)
+// RETURNS: Nothing; Pushover object initialized
+//--------------------------------------------------------
+
 Pushover::Pushover(const STREAMRECORD_PREFERENCES *ppref)
 {
 	pref = (STREAMRECORD_PREFERENCES *)ppref;
 
 }
+//----------------------------------------------------------
+// PushMessage
+// Function takes a message and pushes it to devices
+// PARAMS: msg (array of chars)
+// RETURNS: Nothing; message is pushed out
+//------------------------------------------------------------
 void Pushover::PushMessage(char msg[])
 {
 	char mycommand[1024];
@@ -27,6 +52,7 @@ void Pushover::PushMessage(char msg[])
 	std::string url = "https://api.pushover.net/1/messages.json";
 	std::string jsonString = "{\" token=" + apiKey + "\ user=" + apiUser + "\ title=Six Stream Recorder \" message =" + message;
 
+	//Put everything in a char array and invoke system, which in turn invokes curl:
 	sprintf(mycommand, "curl -s -F \"token=%s\" -F \"user=%s\" -F \"title=Six Stream Recorder\" -F \"message=%s\" https://api.pushover.net/1/messages.json", 
 		pref->api_key, pref->api_user, msg);
 

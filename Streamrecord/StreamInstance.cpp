@@ -1151,10 +1151,11 @@ bool StreamInstance::RecordStream()
 
 	if (pref->database && pref->schedule_entry[stream_index].monitor_mountpoint && !pref->schedule_entry[stream_index].repeated
 		&& pref->schedule_entry[stream_index].willpurge != 1)
-	{  /*
+	{  
+		/*
 		strcpy(pref->schedule_entry[stream_index].password, "");
 		SaveDatabase(*pref, stream_index, false);
-		Sleep(1000);
+		Sleep(5000);
 		*/
 		pref->schedule_entry[stream_idx].willpurge = 1;
 	}
