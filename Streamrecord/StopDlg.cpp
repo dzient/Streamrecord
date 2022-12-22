@@ -245,27 +245,14 @@ void StopDlg::OnLbnDblclkList1()
 						}
 				}
 				ppref->schedule_entry[alist[i]].parent = k;
-				///DeleteDatabase(alist[i], *ppref);
-				///Sleep(1000);
-				
-			//	ppref->schedule_entry[alist[i]].willpurge = 1;
-			//MessageBoxA(NULL, LPCSTR("Deleting a mountpoint...please wait; this can take up to a minute to complete."), 
-			//		PROGRAM_NAME, MB_SYSTEMMODAL|MB_ICONEXCLAMATION);
+			
 			
 				if (ppref->database)
 				{
-					//strcpy(ppref->schedule_entry[alist[i]].password, "");
-					//Sleep(5000);
 					SaveDatabase(*ppref, false, k); // alist[i]);
 					strcpy(ppref->schedule_entry[alist[i]].password, "");
-					//SaveDatabase(*ppref, false, alist[i]);
 					Sleep(1000);
-					//DeleteDatabase(ppref->schedule_entry[alist[i]].schedule_id, *ppref);
 					ppref->schedule_entry[alist[i]].willpurge = 1;
-					/////LoadDatabase(*ppref);
-					//Sleep(2000);
-					////Sleep(5000); // +ppref->DBinterval * 1000);
-					//SaveDatabase(*ppref, false, k);
 				}
 				
 			}

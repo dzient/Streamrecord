@@ -21,7 +21,7 @@ public:
 		IGNORE_LIST *ignore = NULL,
 		SCHEDULE_ADD_LIST *add = NULL,
 		CWnd* pParent = NULL);   // standard constructor
-
+	
 	bool IsDestroyed() { return destroyed; }
 	void SetDestroyed(bool val) { destroyed = val; }
 	bool IsUpdated() { return updated; }

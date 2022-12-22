@@ -317,7 +317,7 @@ void AddToSchedule(STREAMRECORD_PREFERENCES *pref,
 	pref->schedule_entry[i].recorded = FALSE;
 	pref->schedule_entry[i].visible = FALSE;
 	pref->schedule_entry[i].willpurge = 0;
-	////pref->schedule_entry[i].schedule_id = 65535;
+	pref->schedule_entry[i].schedule_id = 0;
 	for (k = 0, m = 0; k < (signed)strlen(pref->schedule_entry[i].program); k++)
 		m += pref->schedule_entry[i].program[k];
 	pref->schedule_entry[i].id = m%100001;

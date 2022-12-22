@@ -95,6 +95,7 @@ protected:
 	DECLARE_MESSAGE_MAP()
 	
 public:
+	void ResetTimer();
 	void CheckForScheduledEvents();
 	void CheckServer();
 	void CheckMessagePump();

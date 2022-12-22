@@ -1149,13 +1149,13 @@ bool StreamInstance::RecordStream()
 			&& (!fail || inf_retry || retry++ < RETRY_LIMIT || !tout_exceeded)); 
 	}
 
-	if (pref->database && pref->schedule_entry[stream_index].monitor_mountpoint && !pref->schedule_entry[stream_index].repeated
-		&& pref->schedule_entry[stream_index].willpurge != 1)
+	if (pref->database && pref->schedule_entry[stream_index].monitor_mountpoint && !pref->schedule_entry[stream_index].repeated)
+		//&& pref->schedule_entry[stream_index].willpurge != 1)
 	{  
 		/*
 		strcpy(pref->schedule_entry[stream_index].password, "");
-		SaveDatabase(*pref, stream_index, false);
-		Sleep(5000);
+		SaveDatabase(*pref, stream_index, true);
+		Sleep(3000);
 		*/
 		pref->schedule_entry[stream_idx].willpurge = 1;
 	}

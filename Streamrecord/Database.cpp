@@ -722,19 +722,19 @@ bool Database::LoadPreferences(STREAMRECORD_PREFERENCES& pref)
 					//stmt->executeUpdate(delentry);
 					DeletePreferences(temp->schedule_entry[i].schedule_id);
 					temp->schedule_entry[i].willpurge = 0;
-					
 					temp->schedule_entry[i].monitor_mountpoint = 0;
 					temp->schedule_entry[i].schedule_id = 0;
 					memset(&temp->schedule_entry[i], 0, sizeof(temp->schedule_entry[i]));
 					pref.pruning = 1;
 					return false;
-					//continue;
+					////continue;
 				}
 				
 			
 				if (strcmp(temp->schedule_entry[i].password, pref.DBpassword) != 0) //|| temp->schedule_entry[i].willpurge)
 				{
 					DeletePreferences(temp->schedule_entry[i].schedule_id);
+					///memset(((LPVOID)temp->schedule_entry[i]), 0, sizeof(temp->schedule_entry[i]));
 					continue;
 				}
 				
@@ -875,10 +875,10 @@ bool Database::CopySchedule(STREAMRECORD_PREFERENCES& pref)
  		for (i = 0, max_id = 0; i < temp->num_entries; i++)
 			if (temp->schedule_entry[i].schedule_id > max_id)
 				max_id = temp->schedule_entry[i].schedule_id;
-		temp_ptr = new wptr[max_id+1];
-		temp_streams = new long[max_id + 1];
-		temp_recorded = new BOOL[max_id + 1];
-		temp_stream_running = new BOOL[max_id + 1];
+		temp_ptr = new wptr[max_id*2+1];
+		temp_streams = new long[max_id*2 + 1];
+		temp_recorded = new BOOL[max_id*2 + 1];
+		temp_stream_running = new BOOL[max_id*2 + 1];
 		///willpurge = new char[max_id + 1];
 		//visible = new BOOL[max_id + 1];
 		memset(temp_ptr, 0, sizeof(wptr) * (max_id+1));

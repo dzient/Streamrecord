@@ -2,6 +2,7 @@
 #include "loadpref.h"
 #include "Database.h"
 #include "Pushover.h"
+#include "StreamrecordDlg.h"
 
 #include <direct.h>
 #include <afxmt.h>
@@ -19,6 +20,8 @@
 extern CMutex pref_mutex;
 
 extern CMutex server_mutex;
+
+extern CStreamrecordDlg* recorddlg_ptr;
 
 char working_dir[1024];
 
@@ -115,6 +118,7 @@ UINT SaveThread(LPVOID db_params)
 
 bool status_lock = false;
 bool ssr_init = false;
+bool fail = false;
 
 UINT PushMessageThread(LPVOID db_params)
 {
@@ -172,19 +176,27 @@ UINT LoadDatabaseThread(LPVOID db_params)
 	db_struct* db = (db_struct*)db_params;
 	bool rval;
 	LDB_mutex.Lock();
-	
+	fail = false;
+
 	do
 	{
 		rval = db->dbptr->LoadPreferences(*db->pref);
+		
 		if (!rval)
-			Sleep(1000);		
-	
+		{
+			Sleep(3000);
+			fail = true;
+			/////recorddlg_ptr->ResetTimer();
+		}
+		
+		/*
 		if (!rval)
 		{
 			delete dbase;
 			dbase = new Database(*db->pref);
 			db->dbptr = dbase;
 		}
+		*/
 	
 	} while (!rval);
 	
@@ -192,6 +204,13 @@ UINT LoadDatabaseThread(LPVOID db_params)
 	///rval = db->dbptr->LoadPreferences(*db->pref);
 	
 		//Sleep(100);
+	return 1;
+}
+
+UINT Release(LPVOID db_params)
+{
+	for (int i = 0; i < 10; i++)
+		LDB_mutex.Unlock();
 	return 1;
 }
 UINT DeleteDatabaseThread(LPVOID db_params)
@@ -755,10 +774,13 @@ void LoadDatabase(STREAMRECORD_PREFERENCES& pref)
 	}
 	else
 	{
+		if (fail)
+			AfxBeginThread(Release, (LPVOID)&db_params, THREAD_PRIORITY_LOWEST);
+
 		db_params.dbptr = dbase;
 		db_params.pref = &pref;
 
-		AfxBeginThread(LoadDatabaseThread, (LPVOID)&db_params, THREAD_PRIORITY_BELOW_NORMAL);
+		AfxBeginThread(LoadDatabaseThread, (LPVOID)&db_params, THREAD_PRIORITY_LOWEST);
 	}
 }
 //----------------------------------------------------------------
@@ -780,7 +802,7 @@ void CopySchedule(STREAMRECORD_PREFERENCES& pref)
 	db_params.dbptr = dbase;
 	db_params.pref = &pref;
 
-	AfxBeginThread(CopyScheduleThread, (LPVOID)&db_params, THREAD_PRIORITY_BELOW_NORMAL);
+	AfxBeginThread(CopyScheduleThread, (LPVOID)&db_params, THREAD_PRIORITY_LOWEST);
 }
 void LoadandCopy(STREAMRECORD_PREFERENCES& pref)
 {

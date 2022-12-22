@@ -59,17 +59,19 @@ static char THIS_FILE[] = __FILE__;
 #define TIMER_ID_7	7
 #define TIMER_ID_8	8
 #define TIMER_ID_9	9
+#define TIMER_ID_10 10
 #define	FC_MAX		50
 
 extern Database* dbase;
 extern bool preferences_lock;
+
 
 StreamInstance *stream_ptr = NULL;
 //typedef StreamInstance* StreamPtr;
 StreamPtr stream_array[MAX_STREAMS];
 HINSTANCE dllhandle;
 CWinThread *threadPtr = NULL;
-
+CStreamrecordDlg *recorddlg_ptr = NULL;
 extern Database* dbase;
 extern Pushover* push;
 
@@ -245,7 +247,7 @@ CStreamrecordDlg::CStreamrecordDlg(CWnd* pParent /*=NULL*/)
 	, m_pushover(FALSE)
 {
 	
-
+	recorddlg_ptr = this;
 	_getcwd(curdir, 1023);
 	ConvertString(minimize_icon, "icon.ico");
 
@@ -481,9 +483,10 @@ BOOL CStreamrecordDlg::OnInitDialog()
 	SetTimer(TIMER_ID_5,pref.DBinterval*1000, 0);
 	SetTimer(TIMER_ID_6, 3600000, 0);
 	SetTimer(TIMER_ID_7, 30000, 0);
+	///////////SetTimer(TIMER_ID_10, 360000, 0);
 	/////SetTimer(TIMER_ID_8, 3600000, 0);
 	//SetTimer(TIMER_ID_8, 60000, 0);
-	///SetTimer(TIMER_ID_9,300000, 0);
+	SetTimer(TIMER_ID_10,60000, 0);
 	
 
 	m_play_button.SetBitmap(::LoadBitmap( AfxGetApp()->m_hInstance,MAKEINTRESOURCE(IDB_BITMAP5)));
@@ -993,7 +996,7 @@ void CStreamrecordDlg::CheckServer()
 							AddToSchedule(&pref,&add,mp_list[j],TRUE,
 								FALSE,0,0,0,0,pref.schedule_entry[i].timeout);
 							SaveDatabase(pref, false, pref.num_entries - 1);
-							Sleep(2000);
+							Sleep(1000);
 							//adDatabase(pref);
 							//ignore.ignore_entry[ignore.num_entries].entry_num = pref.schedule_entry[i].id;
 							//strcpy(ignore.ignore_entry[ignore.num_entries++].mountpoint_URL,mp_list[j]);
@@ -1128,6 +1131,13 @@ void CStreamrecordDlg::CheckForScheduledEvents()
 
 	for (i = 0; i < pref.num_entries; i++)
 	{
+		if (pref.schedule_entry[i].willpurge == 1)
+		{
+			pref.schedule_entry[i].willpurge = 0;
+			strcpy(pref.schedule_entry[i].password, "");
+			SaveDatabase(pref, false,i);
+			////Sleep(5000);
+		}
 		//straddle variable is for a program that "straddles" between one day
 		//and another day; e.g. 11 PM to 1AM, or 10 PM to 2AM, etc.
 		straddle = false;
@@ -1640,6 +1650,12 @@ void CStreamrecordDlg::OnAboutProgram()
 
 	box.DoModal();
 }
+void CStreamrecordDlg::ResetTimer()
+{
+	KillTimer(TIMER_ID_5);
+	//////Sleep(5000);
+	SetTimer(TIMER_ID_5, pref.DBinterval * 1000, 0);
+}
 //------------------------------------------
 // OnTimer
 // Function is called when a timer 
@@ -1711,7 +1727,9 @@ void CStreamrecordDlg::OnTimer(UINT_PTR nIDEvent)
 		if (dialog_init && pref.database && !pref.pruning) // && pref.no_load)
 		{
 			LoadDatabase(pref);
-			if (!pref.pruning)
+			if (pref.pruning)
+				ResetTimer();
+			else
 				CopySchedule(pref);	
 		}	
 		break;
@@ -1739,6 +1757,10 @@ void CStreamrecordDlg::OnTimer(UINT_PTR nIDEvent)
 		case TIMER_ID_9:
 			///if (dialog_init && pref.database)
 			///	SetStatus(pref);
+			break;
+		case TIMER_ID_10:
+			//Need to reset the timer every so often:
+			/////ResetTimer();
 			break;
 		default: break;
 	}
